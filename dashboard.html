@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gassed — Dashboard</title>
+<style>
+  :root{
+    --bg:#0a0612;
+    --card:#150c24;
+    --card2:#1b1130;
+    --violet:#8b2fff;
+    --violet-bright:#b565ff;
+    --pink:#ff4fd8;
+    --text:#f4eefe;
+    --muted:#a89bc4;
+    --green:#4fe0a0;
+    --amber:#ffb54f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(circle at 50% 0%, #1c0f33 0%, var(--bg) 55%);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+  }
+  .phone{
+    width:100%;
+    max-width:430px;
+    min-height:100vh;
+    padding-bottom:50px;
+  }
+
+  /* Header */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:20px 20px 14px;
+  }
+  .brand-lockup{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:32px;height:32px;border-radius:9px;
+    background:linear-gradient(135deg,var(--violet),var(--pink));
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800; font-size:14px;
+    box-shadow:0 0 16px rgba(139,47,255,0.5);
+  }
+  .brand-hi{font-size:11px; color:var(--muted); line-height:1.3;}
+  .brand-hi b{color:var(--text); font-size:13.5px; display:block;}
+  .bell{
+    position:relative;
+    width:38px;height:38px;
+    border-radius:50%;
+    background:var(--card);
+    border:1px solid rgba(255,255,255,0.08);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .bell svg{width:17px;height:17px;}
+  .bell path{stroke:var(--muted); fill:none; stroke-width:1.8;}
+  .bell-dot{
+    position:absolute; top:6px; right:7px;
+    width:8px;height:8px;border-radius:50%;
+    background:var(--pink);
+    box-shadow:0 0 8px var(--pink);
+    animation:pulse-dot 1.8s infinite;
+  }
+  @keyframes pulse-dot{
+    0%,100%{transform:scale(1); opacity:1;}
+    50%{transform:scale(1.3); opacity:.6;}
+  }
+
+  /* Stats row */
+  .stats{
+    display:flex;
+    gap:10px;
+    padding:6px 20px 4px;
+  }
+  .stat{
+    flex:1;
+    background:var(--card);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:14px;
+    padding:13px 12px;
+    text-align:left;
+  }
+  .stat-icon{width:18px; height:18px; margin-bottom:8px;}
+  .stat-icon path{fill:url(#statGrad);}
+  .stat-num{font-size:19px; font-weight:800;}
+  .stat-label{font-size:10.5px; color:var(--muted); margin-top:2px; line-height:1.3;}
+
+  .section{margin:24px 20px 0;}
+  .section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .section-label{
+    font-size:12px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  .new-btn{
+    font-size:12px;
+    font-weight:700;
+    color:#fff;
+    background:linear-gradient(90deg,var(--violet),var(--pink));
+    padding:7px 13px;
+    border-radius:999px;
+    border:none;
+    cursor:pointer;
+  }
+
+  /* Event cards */
+  .event-card{
+    background:var(--card);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:16px;
+    padding:15px;
+    margin-bottom:12px;
+  }
+  .event-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:10px;
+  }
+  .event-venue{font-size:16px; font-weight:800;}
+  .event-when{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .status-pill{
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.5px;
+    padding:4px 9px;
+    border-radius:999px;
+    text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .status-live{background:rgba(79,224,160,0.15); color:var(--green); border:1px solid rgba(79,224,160,0.4);}
+  .status-full{background:rgba(255,181,79,0.15); color:var(--amber); border:1px solid rgba(255,181,79,0.4);}
+  .status-draft{background:rgba(255,255,255,0.08); color:var(--muted); border:1px solid rgba(255,255,255,0.15);}
+  .status-past{background:rgba(255,255,255,0.05); color:var(--muted); border:1px solid rgba(255,255,255,0.1);}
+
+  .mini-tank{
+    height:9px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.06);
+    overflow:hidden;
+    margin-bottom:6px;
+  }
+  .mini-tank-fill{
+    height:100%;
+    border-radius:999px;
+    background:linear-gradient(90deg,var(--violet),var(--pink));
+  }
+  .mini-count{font-size:11.5px; color:var(--muted);}
+  .mini-count b{color:var(--text);}
+
+  .card-actions{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+  }
+  .action-btn{
+    flex:1;
+    text-align:center;
+    padding:9px 0;
+    border-radius:10px;
+    font-size:12.5px;
+    font-weight:700;
+    border:1px solid rgba(255,255,255,0.1);
+    background:rgba(255,255,255,0.03);
+    color:var(--text);
+    cursor:pointer;
+  }
+  .action-btn.primary{
+    background:linear-gradient(90deg,var(--violet),var(--pink));
+    border:none;
+    color:#fff;
+  }
+
+  .about summary{
+    list-style:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:11px 14px;
+    background:var(--card);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:12px;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--muted);
+  }
+  .about summary::-webkit-details-marker{display:none;}
+  .about .chev{
+    width:9px; height:9px;
+    border-right:1.6px solid var(--violet-bright);
+    border-bottom:1.6px solid var(--violet-bright);
+    transform:rotate(-45deg);
+    transition:transform .25s ease;
+  }
+  .about[open] summary .chev{transform:rotate(45deg);}
+
+  /* Editor */
+  .editor{
+    background:var(--card2);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:16px;
+    padding:16px;
+    margin-top:14px;
+    display:none;
+  }
+  .editor.open{display:block;}
+  .editor-title{
+    font-size:14px;
+    font-weight:800;
+    margin-bottom:2px;
+  }
+  .editor-sub{
+    font-size:11.5px;
+    color:var(--muted);
+    margin-bottom:16px;
+  }
+  .field{margin-bottom:13px;}
+  .field label{
+    display:block;
+    font-size:11px;
+    letter-spacing:.4px;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .field input, .field textarea{
+    width:100%;
+    padding:11px 13px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:#0f0919;
+    color:var(--text);
+    font-size:14px;
+    font-family:inherit;
+    resize:vertical;
+  }
+  .field input:focus, .field textarea:focus{
+    outline:none;
+    border-color:var(--violet-bright);
+    box-shadow:0 0 0 3px rgba(139,47,255,0.25);
+  }
+  .field-row{display:flex; gap:10px;}
+  .field-row .field{flex:1;}
+
+  .pkg-edit{
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:10px;
+  }
+  .pkg-edit-top{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:8px;
+  }
+  .pkg-edit-top span{font-size:11.5px; font-weight:700; color:var(--violet-bright);}
+  .pkg-remove{
+    font-size:11px; color:var(--muted); cursor:pointer; background:none; border:none;
+  }
+  .add-pkg{
+    width:100%;
+    padding:11px;
+    border-radius:10px;
+    border:1.5px dashed rgba(181,101,255,0.4);
+    background:rgba(139,47,255,0.06);
+    color:var(--violet-bright);
+    font-weight:700;
+    font-size:12.5px;
+    cursor:pointer;
+    margin-bottom:16px;
+  }
+
+  .toggle-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:16px;
+  }
+  .toggle-row-label{font-size:13px; font-weight:600;}
+  .toggle-row-sub{font-size:11px; color:var(--muted); margin-top:2px;}
+  .switch{
+    width:42px; height:24px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.15);
+    position:relative;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .switch.on{background:linear-gradient(90deg,var(--violet),var(--pink));}
+  .switch-dot{
+    position:absolute;
+    top:3px; left:3px;
+    width:18px;height:18px;
+    border-radius:50%;
+    background:#fff;
+    transition:left .2s ease;
+  }
+  .switch.on .switch-dot{left:21px;}
+
+  .flyer-upload{
+    border:1.5px dashed rgba(255,255,255,0.2);
+    border-radius:12px;
+    padding:20px;
+    text-align:center;
+    font-size:12px;
+    color:var(--muted);
+    margin-bottom:16px;
+  }
+
+  .save-row{display:flex; gap:10px;}
+  .save-btn{
+    flex:2;
+    padding:13px;
+    border-radius:12px;
+    border:none;
+    font-weight:800;
+    font-size:14px;
+    color:#fff;
+    background:linear-gradient(90deg,var(--violet),var(--pink));
+    box-shadow:0 6px 20px rgba(139,47,255,0.4);
+    cursor:pointer;
+  }
+  .copy-btn{
+    flex:1;
+    padding:13px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:rgba(255,255,255,0.03);
+    color:var(--text);
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+  }
+
+  .toast{
+    position:fixed;
+    bottom:22px; left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--card2);
+    border:1px solid rgba(181,101,255,0.4);
+    padding:11px 18px;
+    border-radius:999px;
+    font-size:12.5px;
+    font-weight:700;
+    opacity:0;
+    transition:all .3s ease;
+    pointer-events:none;
+    white-space:nowrap;
+    box-shadow:0 10px 30px rgba(0,0,0,0.5);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="statGrad" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#8b2fff"/>
+      <stop offset="100%" stop-color="#ff4fd8"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="phone">
+
+  <div class="topbar">
+    <div class="brand-lockup">
+      <div class="brand-mark">G</div>
+      <div class="brand-hi">Welcome back<b>@yourpromoterhandle</b></div>
+    </div>
+    <div class="bell"><span class="bell-dot"></span>
+      <svg viewBox="0 0 24 24"><path d="M12 3a5 5 0 00-5 5v3.5c0 .8-.3 1.6-.9 2.2L4.5 15.5h15l-1.6-1.8a3 3 0 01-.9-2.2V8a5 5 0 00-5-5z"/><path d="M9.5 18.5a2.5 2.5 0 005 0"/></svg>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <svg class="stat-icon" viewBox="0 0 24 24"><path d="M12 2c1 3-2 4-2 7a4 4 0 108 0c0-1-.5-2-1-2 .3 1.5-.5 2.5-1.5 2.5C16.8 7 17 4.5 15 3c.5 1.5-.3 2.6-1.3 3.6C12.6 7.7 12 8.8 12 10a4 4 0 01-4-4c0-2 1-3.5 2-4-1.5.3-5 2.3-5 7a7 7 0 1014 0c0-4-2.5-6-3-7 .2 1-.2 2-1 2.3.2-1 0-2-1-2.3z"/></svg>
+      <div class="stat-num">128</div>
+      <div class="stat-label">Gassed up this month</div>
+    </div>
+    <div class="stat">
+      <svg class="stat-icon" viewBox="0 0 24 24"><path fill="url(#statGrad)" d="M7 2v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2h-2V2h-2v2H9V2H7zm-2 6h14v12H5V8z"/></svg>
+      <div class="stat-num">3</div>
+      <div class="stat-label">Upcoming events</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-label">This week</div>
+      <button class="new-btn">+ New event</button>
+    </div>
+
+    <div class="event-card">
+      <div class="event-top">
+        <div>
+          <div class="event-venue">Ultraviolet</div>
+          <div class="event-when">Saturday, July 18 · Doors 10PM</div>
+        </div>
+        <span class="status-pill status-live">Live</span>
+      </div>
+      <div class="mini-tank"><div class="mini-tank-fill" style="width:63%"></div></div>
+      <div class="mini-count"><b>38 / 60</b> gassed up</div>
+      <div class="card-actions">
+        <button class="action-btn primary" onclick="toggleEditor()">Edit event</button>
+        <button class="action-btn" onclick="showToast('Sign-up list opened')">View list</button>
+      </div>
+    </div>
+
+    <div class="event-card">
+      <div class="event-top">
+        <div>
+          <div class="event-venue">Lost &amp; Found</div>
+          <div class="event-when">Friday, July 24 · Doors 10PM</div>
+        </div>
+        <span class="status-pill status-draft">Draft</span>
+      </div>
+      <div class="mini-count" style="margin-top:2px;">Not published yet — link isn't live</div>
+      <div class="card-actions">
+        <button class="action-btn primary">Finish setup</button>
+        <button class="action-btn">Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <details class="about">
+      <summary>Past events <span class="chev"></span></summary>
+    </details>
+    <div class="event-card" style="margin-top:8px;">
+      <div class="event-top">
+        <div>
+          <div class="event-venue">Ultraviolet</div>
+          <div class="event-when">Saturday, July 11 · Doors 10PM</div>
+        </div>
+        <span class="status-pill status-past">Past</span>
+      </div>
+      <div class="mini-count"><b>52 / 60</b> gassed up</div>
+      <div class="card-actions">
+        <button class="action-btn" onclick="showToast('New event started from this one')">Duplicate</button>
+        <button class="action-btn">View list</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="editorSection">
+    <div class="editor" id="editorCard">
+      <div class="editor-title">Edit — Ultraviolet, July 18</div>
+      <div class="editor-sub">Every field here is what shows on your public page. You can change anything, anytime — even after it's posted.</div>
+
+      <div class="field"><label>Venue name</label><input type="text" value="Ultraviolet"></div>
+      <div class="field"><label>Address</label><input type="text" value="1096 Queen St W, Toronto"></div>
+      <div class="field-row">
+        <div class="field"><label>Date</label><input type="text" value="Saturday, July 18"></div>
+        <div class="field"><label>Doors</label><input type="text" value="10:00 PM"></div>
+      </div>
+      <div class="field"><label>Entry info</label><input type="text" value="Free before 11PM · $20 cover after · 19+"></div>
+      <div class="field">
+        <label>Description</label>
+        <textarea rows="3">Ultraviolet's back for another one — UV lights, wall to wall energy, hip-hop and R&B all night. Pull up early, it fills fast.</textarea>
+      </div>
+      <div class="field"><label>Tonight's hook (optional)</label><input type="text" value="First 25 gassed up get pulled for a free bottle at midnight"></div>
+
+      <div class="field"><label>Packages</label></div>
+      <div class="pkg-edit">
+        <div class="pkg-edit-top"><span>Standard Package</span><button class="pkg-remove">Remove</button></div>
+        <div class="field-row">
+          <div class="field"><input type="text" value="Standard Package" placeholder="Name"></div>
+          <div class="field" style="max-width:90px;"><input type="text" value="$300" placeholder="Price"></div>
+        </div>
+        <div class="field" style="margin-bottom:0;"><input type="text" value="Ciroc + mixers, ice, limes — table for up to 6" placeholder="What's included"></div>
+      </div>
+      <div class="pkg-edit">
+        <div class="pkg-edit-top"><span>VIP Package</span><button class="pkg-remove">Remove</button></div>
+        <div class="field-row">
+          <div class="field"><input type="text" value="VIP Package" placeholder="Name"></div>
+          <div class="field" style="max-width:90px;"><input type="text" value="$600" placeholder="Price"></div>
+        </div>
+        <div class="field" style="margin-bottom:0;"><input type="text" value="Casamigos + full mixer set, VIP section, up to 10" placeholder="What's included"></div>
+      </div>
+      <button class="add-pkg">+ Add another package</button>
+
+      <div class="flyer-upload">Flyer photo — tap to upload</div>
+
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-row-label">Sign-ups open</div>
+          <div class="toggle-row-sub">Turn off to mark the list full</div>
+        </div>
+        <div class="switch on" onclick="this.classList.toggle('on')"><div class="switch-dot"></div></div>
+      </div>
+
+      <div class="save-row">
+        <button class="save-btn" onclick="showToast('Changes saved')">Save changes</button>
+        <button class="copy-btn" onclick="showToast('Link copied')">Copy link</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function toggleEditor(){
+  const el = document.getElementById('editorCard');
+  el.classList.toggle('open');
+  if(el.classList.contains('open')){
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+</script>
+</body>
+</html>
