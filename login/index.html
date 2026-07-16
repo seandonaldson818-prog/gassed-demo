@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gassed — Host Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#100d0c;
+    --panel:#17131a;
+    --card:#1b171c;
+    --card-line:rgba(255,255,255,0.08);
+    --violet:#7b3fe4;
+    --violet-bright:#a374ff;
+    --pink:#ff5fa8;
+    --text:#f5f1eb;
+    --muted:#a89f9a;
+    --muted-dim:#655f68;
+    --display-font:'Bebas Neue', -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(123,63,228,0.32) 0%, transparent 60%),
+      radial-gradient(100% 60% at 100% 110%, rgba(255,95,168,0.16) 0%, transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', -apple-system, sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .wrap{
+    width:100%;
+    max-width:400px;
+  }
+  .brand-mark{
+    width:44px;height:44px;border-radius:12px;
+    background:var(--panel);
+    border:1px solid var(--card-line);
+    display:flex;align-items:center;justify-content:center;
+    font-family:Anton, sans-serif;
+    font-size:20px;
+    color:var(--violet-bright);
+    margin:0 auto 18px;
+  }
+  .title{
+    font-family:Anton, sans-serif;
+    font-size:32px;
+    letter-spacing:.5px;
+    text-align:center;
+    margin-bottom:6px;
+  }
+  .sub{
+    text-align:center;
+    color:var(--muted);
+    font-size:13.5px;
+    line-height:1.5;
+    margin-bottom:32px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--card-line);
+    border-radius:16px;
+    padding:24px;
+  }
+  .step{display:none;}
+  .step.active{display:block;}
+  .field-label{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:8px;
+    display:block;
+  }
+  .phone-input-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .country-code{
+    width:64px;
+    background:var(--panel);
+    border:1px solid var(--card-line);
+    border-radius:10px;
+    color:var(--text);
+    font-size:15px;
+    text-align:center;
+    padding:0 4px;
+  }
+  input[type="tel"], input[type="text"]{
+    flex:1;
+    background:var(--panel);
+    border:1px solid var(--card-line);
+    border-radius:10px;
+    color:var(--text);
+    font-size:15px;
+    padding:0 14px;
+    height:46px;
+    font-family:'Inter', sans-serif;
+  }
+  .country-code{height:46px;}
+  input::placeholder{color:var(--muted-dim);}
+  input:focus, .country-code:focus{outline:none; border-color:var(--violet-bright);}
+  .hint{
+    font-size:11px;
+    color:var(--muted-dim);
+    line-height:1.5;
+    margin-bottom:20px;
+  }
+  .hint b{color:var(--muted);}
+  .go-btn{
+    width:100%;
+    background:linear-gradient(135deg, var(--violet), var(--violet-bright));
+    border:none;
+    border-radius:12px;
+    color:#fff;
+    font-family:'Inter', sans-serif;
+    font-weight:700;
+    font-size:14.5px;
+    padding:14px;
+    cursor:pointer;
+  }
+  .go-btn:active{transform:scale(0.98);}
+  .go-btn:disabled{opacity:.5; cursor:default;}
+
+  /* Verifying step */
+  .verify-wrap{
+    text-align:center;
+    padding:20px 0 8px;
+  }
+  .spinner{
+    width:38px;height:38px;
+    border-radius:50%;
+    border:3px solid var(--card-line);
+    border-top-color:var(--violet-bright);
+    margin:0 auto 20px;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .verify-title{font-size:15px; font-weight:700; margin-bottom:6px;}
+  .verify-sub{font-size:13px; color:var(--muted);}
+  .verify-phone{color:var(--text); font-weight:600;}
+
+  .footer-note{
+    text-align:center;
+    margin-top:24px;
+    font-size:11.5px;
+    color:var(--muted-dim);
+    line-height:1.6;
+  }
+  .footer-note a{color:var(--muted); text-decoration:underline;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand-mark">G</div>
+    <div class="title">HOST LOGIN</div>
+    <div class="sub">Sign in with your phone number — no password, just a text code.</div>
+
+    <div class="card">
+      <!-- Step 1: phone entry -->
+      <div class="step active" id="stepPhone">
+        <label class="field-label">Phone number</label>
+        <div class="phone-input-row">
+          <input class="country-code" type="text" value="+1" disabled>
+          <input type="tel" id="phoneInput" placeholder="(416) 555-0110" inputmode="numeric">
+        </div>
+        <div class="hint">This is a working demo, not a live backend yet — <b>try (416) 555-0110</b> for @inaki's Parlour dashboard, or <b>(647) 555-0199</b> for @reese's Ultraviolet dashboard.</div>
+        <button class="go-btn" id="sendCodeBtn" onclick="sendCode()">Send code</button>
+      </div>
+
+      <!-- Step 2: verifying (auto-advances) -->
+      <div class="step" id="stepVerify">
+        <div class="verify-wrap">
+          <div class="spinner"></div>
+          <div class="verify-title">Verifying your number…</div>
+          <div class="verify-sub">Code sent to <span class="verify-phone" id="verifyPhoneText"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">Real accounts and real SMS codes come with the full app — this demo skips straight to a dashboard once your number's recognized.</div>
+  </div>
+
+<script>
+function sendCode(){
+  const raw = document.getElementById('phoneInput').value.trim();
+  if(!raw){
+    document.getElementById('phoneInput').focus();
+    return;
+  }
+  document.getElementById('verifyPhoneText').textContent = '+1 ' + raw;
+  document.getElementById('stepPhone').classList.remove('active');
+  document.getElementById('stepVerify').classList.add('active');
+  document.getElementById('sendCodeBtn').disabled = true;
+
+  const digits = raw.replace(/\D/g,'');
+  let dest = '/promoter/parlour/'; // default fallback
+
+  if(digits.includes('0199')){
+    dest = '/promoter/ultraviolet/';
+  } else if(digits.includes('0110')){
+    dest = '/promoter/parlour/';
+  }
+
+  setTimeout(() => {
+    window.location.href = dest;
+  }, 1600);
+}
+
+document.getElementById('phoneInput').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') sendCode();
+});
+</script>
+</body>
+</html>
