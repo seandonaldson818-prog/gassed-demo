@@ -3,782 +3,127 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gassed — Ultraviolet</title>
+<title>Gassed</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0a0612;
-    --card:#150c24;
-    --violet:#8b2fff;
-    --violet-bright:#b565ff;
-    --pink:#ff4fd8;
-    --text:#f4eefe;
-    --muted:#a89bc4;
+    --bg:#100d0c;
+    --panel:#17131a;
+    --card:#1b171c;
+    --card-line:rgba(255,255,255,0.08);
+    --violet:#7b3fe4;
+    --violet-bright:#a374ff;
+    --pink:#ff5fa8;
+    --text:#f5f1eb;
+    --muted:#a89f9a;
+    --display-font:'Bebas Neue', -apple-system, sans-serif;
   }
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box; margin:0; padding:0;}
   body{
-    margin:0;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:radial-gradient(circle at 50% 0%, #1c0f33 0%, var(--bg) 55%);
+    min-height:100vh;
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(123,63,228,0.35) 0%, transparent 60%),
+      radial-gradient(100% 60% at 100% 110%, rgba(255,95,168,0.18) 0%, transparent 55%),
+      var(--bg);
     color:var(--text);
-    min-height:100vh;
+    font-family:'Inter', -apple-system, sans-serif;
     display:flex;
+    align-items:center;
     justify-content:center;
+    padding:24px;
   }
-  .phone{
+  .wrap{
     width:100%;
-    max-width:430px;
-    min-height:100vh;
-    position:relative;
-    overflow-x:hidden;
-    padding-bottom:60px;
-  }
-  .hero{
-    padding:46px 20px 30px;
-    text-align:center;
-    position:relative;
-    overflow:hidden;
-    isolation:isolate;
-  }
-  .hero-bg{
-    position:absolute;
-    inset:0;
-    z-index:-1;
-    background:#0a0612;
-    overflow:hidden;
-  }
-  .hero-bg::after{
-    /* grain / haze texture so it reads as a dark room, not a flat gradient */
-    content:"";
-    position:absolute;
-    inset:0;
-    opacity:0.35;
-    mix-blend-mode:overlay;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
-  }
-  .beam{
-    position:absolute;
-    width:220px;
-    height:220px;
-    border-radius:50%;
-    filter:blur(30px);
-    mix-blend-mode:screen;
-    opacity:0.75;
-  }
-  .beam.b1{
-    background:radial-gradient(circle, var(--violet-bright), transparent 70%);
-    top:-60px; left:-40px;
-    animation:drift1 9s ease-in-out infinite;
-  }
-  .beam.b2{
-    background:radial-gradient(circle, var(--pink), transparent 70%);
-    top:20px; right:-60px;
-    animation:drift2 11s ease-in-out infinite;
-  }
-  .beam.b3{
-    background:radial-gradient(circle, #5a1fbf, transparent 70%);
-    bottom:-80px; left:40%;
-    width:280px; height:280px;
-    animation:drift3 13s ease-in-out infinite;
-  }
-  @keyframes drift1{
-    0%,100%{transform:translate(0,0) scale(1);}
-    50%{transform:translate(40px,30px) scale(1.15);}
-  }
-  @keyframes drift2{
-    0%,100%{transform:translate(0,0) scale(1);}
-    50%{transform:translate(-30px,25px) scale(1.1);}
-  }
-  @keyframes drift3{
-    0%,100%{transform:translate(-50%,0) scale(1);}
-    50%{transform:translate(-50%,-25px) scale(1.2);}
-  }
-  .hero-fade{
-    position:absolute;
-    left:0; right:0; bottom:0;
-    height:70px;
-    background:linear-gradient(to bottom, transparent, var(--bg));
-    z-index:0;
-  }
-  .hero > *:not(.hero-bg):not(.hero-fade){
-    position:relative;
-    z-index:1;
+    max-width:480px;
   }
   .brand{
-    font-size:12px;
-    letter-spacing:3px;
-    color:var(--muted);
-    text-transform:uppercase;
-    margin-bottom:14px;
-  }
-  .brand span{color:var(--violet-bright); font-weight:700;}
-  .club-name{
-    font-size:34px;
-    font-weight:800;
+    font-family:Anton, sans-serif;
+    font-size:56px;
     letter-spacing:1px;
-    background:linear-gradient(90deg,var(--violet-bright),var(--pink));
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
-    margin:0 0 6px;
-    text-shadow:0 0 40px rgba(139,47,255,0.35);
-  }
-  .meta{
-    font-size:14px;
-    color:var(--muted);
-    line-height:1.6;
-  }
-  .host-row{
-    margin-top:14px;
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    background:rgba(139,47,255,0.12);
-    border:1px solid rgba(139,47,255,0.35);
-    padding:6px 14px;
-    border-radius:999px;
-    font-size:13px;
-  }
-  .host-dot{
-    width:8px;height:8px;border-radius:50%;
-    background:var(--violet-bright);
-    box-shadow:0 0 10px var(--violet-bright);
-  }
-  .section{
-    margin:22px 20px 0;
-  }
-  .section-label{
-    font-size:12px;
-    letter-spacing:2px;
-    text-transform:uppercase;
-    color:var(--muted);
-    margin-bottom:10px;
-  }
-  .entry-card{
-    background:var(--card);
-    border:1px solid rgba(255,255,255,0.06);
-    border-radius:14px;
-    padding:14px 16px;
-    font-size:14px;
-    color:var(--text);
-  }
-  .entry-card b{color:var(--violet-bright);}
-
-  .hype-banner{
-    margin-top:10px;
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:12px 14px;
-    border-radius:14px;
-    background:linear-gradient(120deg, rgba(139,47,255,0.16), rgba(255,79,216,0.12));
-    border:1px solid rgba(255,79,216,0.35);
-    box-shadow:0 0 22px rgba(139,47,255,0.18);
-  }
-  .hype-flame{
-    flex-shrink:0;
-    width:26px; height:26px;
-    animation:flicker 2.4s ease-in-out infinite;
-  }
-  .hype-flame path{
-    fill:url(#flameGrad);
-  }
-  @keyframes flicker{
-    0%,100%{transform:scale(1); opacity:1;}
-    50%{transform:scale(1.06); opacity:.9;}
-  }
-  .hype-title{
-    font-size:10.5px;
-    letter-spacing:1.5px;
-    text-transform:uppercase;
-    color:var(--pink);
-    font-weight:800;
-    margin-bottom:3px;
-  }
-  .hype-text{
-    font-size:13.5px;
-    color:var(--text);
-    line-height:1.4;
-    font-weight:600;
-  }
-
-  /* Gas tank gauge */
-  .gauge-wrap{
-    background:var(--card);
-    border:1px solid rgba(255,255,255,0.06);
-    border-radius:14px;
-    padding:14px 16px;
-  }
-  .gauge-top{
-    display:flex;
-    justify-content:space-between;
-    font-size:13px;
-    margin-bottom:10px;
-    color:var(--muted);
-  }
-  .gauge-top b{color:var(--text);}
-  .tank-wrap{
-    position:relative;
-    height:40px;
-    border-radius:10px;
-    background:linear-gradient(180deg,#180f2a,#0c0716);
-    border:1px solid rgba(255,255,255,0.09);
-    box-shadow:inset 0 2px 5px rgba(0,0,0,0.65), inset 0 -1px 0 rgba(255,255,255,0.04);
-    overflow:hidden;
-  }
-  .tank-wrap::before{
-    /* glass highlight */
-    content:"";
-    position:absolute;
-    top:2px; left:2px; right:2px;
-    height:8px;
-    border-radius:8px 8px 40% 40%;
-    background:linear-gradient(180deg, rgba(255,255,255,0.14), transparent);
-    z-index:3;
-    pointer-events:none;
-  }
-  .tank-fill{
-    position:absolute;
-    left:0; top:0; bottom:0;
-    width:0%;
-    background:linear-gradient(90deg, var(--violet), var(--pink));
-    transition:width 1.6s cubic-bezier(.2,.8,.2,1);
-    overflow:hidden;
-  }
-  .tank-edge{
-    position:absolute;
-    top:-8px; right:-9px;
-    width:20px;
-    height:calc(100% + 16px);
-    background:rgba(255,255,255,0.22);
-    filter:blur(5px);
-    animation:tank-bob 2.6s ease-in-out infinite;
-  }
-  @keyframes tank-bob{
-    0%,100%{transform:translateY(-3px) scaleY(1);}
-    50%{transform:translateY(3px) scaleY(1.08);}
-  }
-  .tank-ticks{
-    position:absolute;
-    inset:0;
-    display:flex;
-    z-index:2;
-    pointer-events:none;
-  }
-  .tank-ticks span{
-    flex:1;
-    border-right:1px solid rgba(255,255,255,0.05);
-  }
-  .tank-ticks span:last-child{border-right:none;}
-  .tank-labels{
-    position:absolute;
-    inset:0;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:0 12px;
-    font-size:9.5px;
-    letter-spacing:1.5px;
-    font-weight:800;
-    color:rgba(255,255,255,0.45);
-    z-index:3;
-    pointer-events:none;
-  }
-
-  /* Fog wipe */
-  .fog-wrap{
-    position:relative;
-    border-radius:16px;
-    overflow:hidden;
-    border:1px solid rgba(255,255,255,0.06);
-  }
-  .fog-hint{
-    position:absolute;
-    inset:0;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:10px;
-    z-index:5;
-    pointer-events:none;
-    color:#fff;
-    text-shadow:0 2px 12px rgba(0,0,0,0.6);
-    transition:opacity .6s ease;
-  }
-  .swipe-icon{
-    width:72px;
-    height:32px;
-    border-radius:16px;
-    background:rgba(255,255,255,0.08);
-    border:1px solid rgba(255,255,255,0.28);
-    position:relative;
-    overflow:hidden;
-  }
-  .swipe-dot{
-    position:absolute;
-    top:3px; left:4px;
-    width:24px; height:24px;
-    border-radius:50%;
-    background:linear-gradient(135deg,var(--violet-bright),var(--pink));
-    box-shadow:0 0 10px rgba(255,79,216,0.7);
-    animation:dotslide 1.7s ease-in-out infinite;
-  }
-  @keyframes dotslide{
-    0%,100%{left:4px;}
-    50%{left:42px;}
-  }
-  .fog-hint p{
-    margin:0;
-    font-size:12px;
-    letter-spacing:1.5px;
-    text-transform:uppercase;
-    font-weight:700;
-    color:rgba(255,255,255,0.85);
-  }
-
-  /* About accordions */
-  .about{
-    margin-top:10px;
-  }
-  .about summary{
-    list-style:none;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:11px 14px;
-    background:var(--card);
-    border:1px solid rgba(255,255,255,0.06);
-    border-radius:12px;
-    font-size:12.5px;
-    font-weight:700;
-    letter-spacing:.3px;
-    color:var(--muted);
-  }
-  .about summary::-webkit-details-marker{display:none;}
-  .about summary .chev{
-    width:9px; height:9px;
-    border-right:1.6px solid var(--violet-bright);
-    border-bottom:1.6px solid var(--violet-bright);
-    transform:rotate(-45deg);
-    transition:transform .25s ease;
-  }
-  .about[open] summary .chev{transform:rotate(45deg);}
-  .about[open] summary{border-radius:12px 12px 0 0;}
-  .about-body{
-    padding:12px 14px 14px;
-    background:rgba(255,255,255,0.02);
-    border:1px solid rgba(255,255,255,0.06);
-    border-top:none;
-    border-radius:0 0 12px 12px;
-    font-size:12.5px;
-    line-height:1.6;
-    color:var(--muted);
-  }
-  #fogCanvas{
-    position:absolute;
-    inset:0;
-    z-index:4;
-    touch-action:none;
-  }
-  .packages{
-    position:relative;
-    padding:16px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-    background:var(--card);
-  }
-  .pkg{
-    background:rgba(255,255,255,0.03);
-    border:1px solid rgba(255,255,255,0.08);
-    border-radius:12px;
-    padding:14px;
-  }
-  .pkg-top{
-    display:flex;
-    justify-content:space-between;
-    align-items:baseline;
+    text-align:center;
+    text-shadow:2px 2px 0 var(--pink), 4px 4px 0 rgba(0,0,0,0.4);
     margin-bottom:6px;
   }
-  .pkg-name{font-weight:700; font-size:15px;}
-  .pkg-price{
-    font-weight:800;
-    color:var(--violet-bright);
-    font-size:16px;
-  }
-  .pkg-desc{
-    font-size:13px;
+  .tagline{
+    text-align:center;
     color:var(--muted);
-    line-height:1.5;
+    font-size:15px;
+    margin-bottom:40px;
   }
-
-  /* Sign up form */
-  .form-card{
-    background:var(--card);
-    border:1px solid rgba(255,255,255,0.06);
-    border-radius:14px;
-    padding:18px 16px;
+  .links{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
   }
-  .field{
-    margin-bottom:12px;
-  }
-  .field label{
+  .card-link{
     display:block;
+    background:var(--card);
+    border:1px solid var(--card-line);
+    border-radius:16px;
+    padding:20px 22px;
+    text-decoration:none;
+    color:var(--text);
+    transition:border-color .15s, transform .15s;
+  }
+  .card-link:hover{
+    border-color:var(--violet-bright);
+    transform:translateY(-2px);
+  }
+  .card-tag{
+    display:inline-block;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    color:var(--violet-bright);
+    background:rgba(123,63,228,0.15);
+    border:1px solid rgba(163,116,255,0.3);
+    border-radius:20px;
+    padding:3px 10px;
+    margin-bottom:10px;
+  }
+  .card-title{
+    font-family:Anton, sans-serif;
+    font-size:22px;
+    letter-spacing:0.5px;
+    margin-bottom:4px;
+  }
+  .card-desc{
+    font-size:13.5px;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .footer{
+    text-align:center;
+    margin-top:36px;
     font-size:12px;
     color:var(--muted);
-    margin-bottom:6px;
-    letter-spacing:.5px;
-  }
-  .field input{
-    width:100%;
-    padding:12px 14px;
-    border-radius:10px;
-    border:1px solid rgba(255,255,255,0.12);
-    background:#0f0919;
-    color:var(--text);
-    font-size:15px;
-  }
-  .field input:focus{
-    outline:none;
-    border-color:var(--violet-bright);
-    box-shadow:0 0 0 3px rgba(139,47,255,0.25);
-  }
-  .age-note{
-    font-size:11.5px;
-    color:var(--muted);
-    margin:6px 0 14px;
-    line-height:1.5;
-  }
-  .submit-btn{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:12px;
-    font-size:15px;
-    font-weight:800;
-    letter-spacing:.5px;
-    color:#fff;
-    background:linear-gradient(90deg,var(--violet),var(--pink));
-    box-shadow:0 6px 24px rgba(139,47,255,0.45);
-    cursor:pointer;
-  }
-  .submit-btn:active{transform:scale(0.98);}
-
-  /* Confirmation + puff */
-  .confirm{
-    display:none;
-    text-align:center;
-    padding:28px 16px;
-    position:relative;
-  }
-  .confirm.show{display:block;}
-  .confirm h3{
-    margin:14px 0 6px;
-    font-size:20px;
-  }
-  .confirm p{
-    color:var(--muted);
-    font-size:13.5px;
-    margin:0;
-  }
-  .puff-canvas{
-    position:absolute;
-    left:50%; top:20px;
-    transform:translateX(-50%);
-    width:220px; height:220px;
-    pointer-events:none;
-  }
-  .check-circle{
-    width:56px;height:56px;
-    margin:0 auto;
-    border-radius:50%;
-    background:linear-gradient(135deg,var(--violet),var(--pink));
-    display:flex;align-items:center;justify-content:center;
-    font-size:26px;
-    box-shadow:0 0 30px rgba(255,79,216,0.55);
-    position:relative;
-    z-index:2;
-  }
-  .footer-note{
-    text-align:center;
-    font-size:11px;
-    color:#5f5478;
-    margin-top:26px;
-    padding:0 30px;
-    line-height:1.6;
+    opacity:0.7;
   }
 </style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute">
-  <defs>
-    <linearGradient id="flameGrad" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0%" stop-color="#8b2fff"/>
-      <stop offset="100%" stop-color="#ff4fd8"/>
-    </linearGradient>
-  </defs>
-</svg>
-<div class="phone">
-
-  <div class="hero">
-    <div class="hero-bg">
-      <div class="beam b1"></div>
-      <div class="beam b2"></div>
-      <div class="beam b3"></div>
+  <div class="wrap">
+    <div class="brand">GASSED</div>
+    <div class="tagline">A link-in-bio built for throwing a night out.</div>
+    <div class="links">
+      <a class="card-link" href="/ultraviolet.html">
+        <div class="card-tag">Guest side</div>
+        <div class="card-title">Ultraviolet — Queen St W</div>
+        <div class="card-desc">Public event page: sign up, packages, the gassed-up gauge.</div>
+      </a>
+      <a class="card-link" href="/parlour.html">
+        <div class="card-tag">Guest side</div>
+        <div class="card-title">The Parlour</div>
+        <div class="card-desc">Same experience, retheme'd for a different venue and host.</div>
+      </a>
+      <a class="card-link" href="/promoter.html">
+        <div class="card-tag">Host side</div>
+        <div class="card-title">Promoter Dashboard</div>
+        <div class="card-desc">@inaki's view — everything a host can edit and manage.</div>
+      </a>
     </div>
-    <div class="brand">powered by <span>gassed</span></div>
-    <div class="club-name">ULTRAVIOLET</div>
-    <div class="meta">1096 Queen St W, Toronto · Saturday, July 18<br>Doors 10:00 PM</div>
-    <div class="host-row"><span class="host-dot"></span> Hosted by @yourpromoterhandle</div>
-    <div class="hero-fade"></div>
+    <div class="footer">Working demos — data is typed in, not live yet.</div>
   </div>
-
-  <div class="section">
-    <details class="about">
-      <summary>About Ultraviolet <span class="chev"></span></summary>
-      <div class="about-body">Dark-room nightclub on Queen St W, built around UV/blacklight lighting rather than screens or LEDs. Hip-hop, R&amp;B and trap all night, dancefloor up front, booths around the perimeter. Capacity ~300 — builds steadily and really goes off closer to 1AM.</div>
-    </details>
-    <details class="about" style="margin-top:8px;">
-      <summary>About your host <span class="chev"></span></summary>
-      <div class="about-body">@yourpromoterhandle has been running nights across Toronto, known for a solid turnout and keeping the crowd right. Questions before tonight — reach out directly on Instagram or Snapchat.</div>
-    </details>
-  </div>
-
-  <div class="section">
-    <div class="section-label">Tonight</div>
-    <div class="entry-card">
-      <b>Free entry</b> before 11PM · <b>$20 cover</b> after · 19+
-    </div>
-    <div class="hype-banner">
-      <svg class="hype-flame" viewBox="0 0 24 24"><path d="M12 2c1 3-2 4-2 7a4 4 0 108 0c0-1-.5-2-1-2 .3 1.5-.5 2.5-1.5 2.5C16.8 7 17 4.5 15 3c.5 1.5-.3 2.6-1.3 3.6C12.6 7.7 12 8.8 12 10a4 4 0 01-4-4c0-2 1-3.5 2-4-1.5.3-5 2.3-5 7a7 7 0 1014 0c0-4-2.5-6-3-7 .2 1-.2 2-1 2.3.2-1 0-2-1-2.3z"/></svg>
-      <div>
-        <div class="hype-title">Tonight's hook</div>
-        <div class="hype-text">First 25 gassed up get pulled for a free bottle at midnight</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="gauge-wrap">
-      <div class="gauge-top"><span>Spots filling up</span><b id="gaugeText">38 / 60 gassed up</b></div>
-      <div class="tank-wrap">
-        <div class="tank-fill" id="gaugeFill"><div class="tank-edge"></div></div>
-        <div class="tank-ticks"><span></span><span></span><span></span><span></span><span></span></div>
-        <div class="tank-labels"><span>E</span><span>F</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">Packages — swipe to reveal</div>
-    <div class="fog-wrap" id="fogWrap">
-      <div class="fog-hint" id="fogHint">
-        <div class="swipe-icon"><div class="swipe-dot"></div></div>
-        <p>Swipe the gas away</p>
-      </div>
-      <canvas id="fogCanvas"></canvas>
-      <div class="packages">
-        <div class="pkg">
-          <div class="pkg-top"><span class="pkg-name">Standard Package</span><span class="pkg-price">$300</span></div>
-          <div class="pkg-desc">Ciroc + mixers, ice, limes — table for up to 6</div>
-        </div>
-        <div class="pkg">
-          <div class="pkg-top"><span class="pkg-name">Premium Package</span><span class="pkg-price">$450</span></div>
-          <div class="pkg-desc">Absolut + Red Bull, mixers, ice, limes — table for up to 8</div>
-        </div>
-        <div class="pkg">
-          <div class="pkg-top"><span class="pkg-name">VIP Package</span><span class="pkg-price">$600</span></div>
-          <div class="pkg-desc">Casamigos + full mixer set, VIP section, up to 10</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">You in?</div>
-    <div class="form-card" id="formCard">
-      <div class="field">
-        <label>Your name</label>
-        <input type="text" id="nameInput" placeholder="First & last name">
-      </div>
-      <div class="field">
-        <label>Phone number</label>
-        <input type="tel" id="phoneInput" placeholder="(416) 000-0000">
-      </div>
-      <div class="field">
-        <label>Instagram handle (optional)</label>
-        <input type="text" id="igInput" placeholder="@yourhandle">
-      </div>
-      <div class="age-note">By signing up you confirm you meet Ultraviolet's 19+ entry requirement. ID checked at the door.</div>
-      <button class="submit-btn" id="submitBtn">I'm gassed — sign me up</button>
-    </div>
-
-    <div class="confirm" id="confirmCard">
-      <canvas class="puff-canvas" id="puffCanvas"></canvas>
-      <div class="check-circle">✓</div>
-      <h3>You're gassed up</h3>
-      <p>You're on the list for Ultraviolet, Saturday July 18.<br>See you at the door.</p>
-    </div>
-  </div>
-
-  <div class="footer-note">
-    This is a concept demo built on Gassed — an app that gives promoters their own branded sign-up page for every night, no more DMs and screenshots.
-  </div>
-
-</div>
-
-<script>
-// ---- Gauge fill animation ----
-window.addEventListener('load', () => {
-  requestAnimationFrame(() => {
-    document.getElementById('gaugeFill').style.width = '63%';
-  });
-});
-
-// ---- Fog wipe canvas ----
-const fogWrap = document.getElementById('fogWrap');
-const canvas = document.getElementById('fogCanvas');
-const ctx = canvas.getContext('2d');
-const fogHint = document.getElementById('fogHint');
-
-function sizeCanvas(){
-  const rect = fogWrap.getBoundingClientRect();
-  canvas.width = rect.width;
-  canvas.height = rect.height;
-  drawFog();
-}
-
-function drawFog(){
-  const w = canvas.width, h = canvas.height;
-  ctx.globalCompositeOperation = 'source-over';
-  const grad = ctx.createLinearGradient(0,0,w,h);
-  grad.addColorStop(0,'#2a1145');
-  grad.addColorStop(0.5,'#3d1a5c');
-  grad.addColorStop(1,'#1c0d33');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0,0,w,h);
-  // soft smoke blobs for texture
-  for(let i=0;i<14;i++){
-    const r = 40 + Math.random()*70;
-    const x = Math.random()*w;
-    const y = Math.random()*h;
-    const rg = ctx.createRadialGradient(x,y,0,x,y,r);
-    rg.addColorStop(0,'rgba(181,101,255,0.35)');
-    rg.addColorStop(1,'rgba(181,101,255,0)');
-    ctx.fillStyle = rg;
-    ctx.beginPath();
-    ctx.arc(x,y,r,0,Math.PI*2);
-    ctx.fill();
-  }
-}
-
-sizeCanvas();
-window.addEventListener('resize', sizeCanvas);
-
-let wiping = false;
-let cleared = false;
-let wipeStrokes = 0;
-
-function erase(x,y){
-  ctx.globalCompositeOperation = 'destination-out';
-  const r = 34;
-  const rg = ctx.createRadialGradient(x,y,0,x,y,r);
-  rg.addColorStop(0,'rgba(0,0,0,1)');
-  rg.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle = rg;
-  ctx.beginPath();
-  ctx.arc(x,y,r,0,Math.PI*2);
-  ctx.fill();
-}
-
-function getPos(e){
-  const rect = canvas.getBoundingClientRect();
-  const point = e.touches ? e.touches[0] : e;
-  return { x: point.clientX - rect.left, y: point.clientY - rect.top };
-}
-
-function checkCleared(){
-  wipeStrokes++;
-  if(wipeStrokes < 8 || cleared) return;
-  const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
-  let transparent = 0;
-  const total = data.length/4;
-  for(let i=3;i<data.length;i+=40){ // sample every 10th pixel for perf
-    if(data[i] < 40) transparent++;
-  }
-  const sampled = total/10;
-  if(transparent/sampled > 0.35){
-    cleared = true;
-    canvas.style.transition = 'opacity .6s ease';
-    canvas.style.opacity = '0';
-    setTimeout(()=>{ canvas.style.pointerEvents='none'; }, 600);
-  }
-}
-
-function startWipe(e){
-  wiping = true;
-  fogHint.style.opacity = '0';
-  const p = getPos(e);
-  erase(p.x,p.y);
-}
-function moveWipe(e){
-  if(!wiping) return;
-  const p = getPos(e);
-  erase(p.x,p.y);
-  checkCleared();
-}
-function endWipe(){ wiping = false; }
-
-canvas.addEventListener('mousedown', startWipe);
-canvas.addEventListener('mousemove', moveWipe);
-window.addEventListener('mouseup', endWipe);
-canvas.addEventListener('touchstart', startWipe, {passive:true});
-canvas.addEventListener('touchmove', moveWipe, {passive:true});
-canvas.addEventListener('touchend', endWipe);
-
-// ---- Sign up submit + puff animation ----
-document.getElementById('submitBtn').addEventListener('click', () => {
-  document.getElementById('formCard').style.display = 'none';
-  const confirmCard = document.getElementById('confirmCard');
-  confirmCard.classList.add('show');
-  playPuff();
-});
-
-function playPuff(){
-  const c = document.getElementById('puffCanvas');
-  c.width = 220; c.height = 220;
-  const pctx = c.getContext('2d');
-  const particles = [];
-  for(let i=0;i<26;i++){
-    const angle = Math.random()*Math.PI*2;
-    const speed = 1 + Math.random()*2.5;
-    particles.push({
-      x:110,y:110,
-      vx:Math.cos(angle)*speed,
-      vy:Math.sin(angle)*speed,
-      r:6+Math.random()*10,
-      life:1,
-      color: Math.random() > 0.5 ? '181,101,255' : '255,79,216'
-    });
-  }
-  function frame(){
-    pctx.clearRect(0,0,220,220);
-    let alive = false;
-    particles.forEach(p=>{
-      if(p.life <= 0) return;
-      alive = true;
-      p.x += p.vx; p.y += p.vy;
-      p.life -= 0.02;
-      pctx.beginPath();
-      pctx.fillStyle = `rgba(${p.color},${Math.max(p.life,0)})`;
-      pctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      pctx.fill();
-    });
-    if(alive) requestAnimationFrame(frame);
-  }
-  frame();
-}
-</script>
 </body>
 </html>
