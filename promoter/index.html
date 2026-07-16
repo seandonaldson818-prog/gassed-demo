@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gassed — Promoter Dashboard (The Parlour)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#100d0c;
+    --panel:#17131a;
+    --card:#1b171c;
+    --card-line:rgba(255,255,255,0.08);
+    --accent:#c99a4f;
+    --accent-bright:#e8bd76;
+    --pink:#d98ba0;
+    --text:#f2ede6;
+    --muted:#8f8a90;
+    --muted-dim:#655f68;
+    --green:#4fe0a0;
+    --amber:#e0a84f;
+    --danger:#e05f6c;
+    --display-font:'Bebas Neue', -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:
+      linear-gradient(180deg, #201a14 0%, var(--bg) 220px),
+      var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+  }
+  .phone{
+    width:100%;
+    max-width:430px;
+    min-height:100vh;
+    padding-bottom:50px;
+  }
+
+  /* Header */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 20px 15px;
+    border-bottom:1px solid var(--card-line);
+    margin-bottom:4px;
+  }
+  .brand-lockup{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:30px;height:30px;border-radius:8px;
+    background:var(--panel);
+    border:1px solid var(--card-line);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800; font-size:13px;
+    color:var(--accent-bright);
+  }
+  .brand-hi{font-size:10.5px; color:var(--muted); line-height:1.3; letter-spacing:.2px;}
+  .brand-hi b{color:var(--text); font-size:13.5px; display:block; font-weight:700;}
+  .dash-tag{
+    font-size:9px;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--accent-bright);
+    background:rgba(201,154,79,0.12);
+    border:1px solid rgba(201,154,79,0.3);
+    padding:2px 7px;
+    border-radius:5px;
+    margin-left:8px;
+  }
+  .bell{
+    position:relative;
+    width:36px;height:36px;
+    border-radius:9px;
+    background:var(--panel);
+    border:1px solid var(--card-line);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .bell svg{width:16px;height:16px;}
+  .bell path{stroke:var(--muted); fill:none; stroke-width:1.8;}
+  .bell-dot{
+    position:absolute; top:7px; right:8px;
+    width:6px;height:6px;border-radius:50%;
+    background:var(--pink);
+  }
+
+  /* Stats row */
+  .stats{
+    display:flex;
+    gap:1px;
+    margin:14px 20px 4px;
+    background:var(--card-line);
+    border:1px solid var(--card-line);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .stat{
+    flex:1;
+    background:var(--panel);
+    padding:13px 14px;
+    text-align:left;
+  }
+  .stat-label{font-size:10px; color:var(--muted); letter-spacing:.3px; margin-bottom:5px;}
+  .stat-num{font-size:20px; font-weight:800; letter-spacing:-.3px;}
+  .stat-num sub{font-size:11px; font-weight:600; color:var(--muted); margin-left:2px;}
+
+  .section{margin:26px 20px 0;}
+  .section-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:11px;
+  }
+  .section-label-wrap{display:flex; align-items:center; gap:7px;}
+  .section-label-wrap svg{width:13px; height:13px; color:var(--muted-dim); flex-shrink:0;}
+  .section-label{
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:1.6px;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  .new-btn{
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--bg);
+    background:var(--accent-bright);
+    padding:7px 12px;
+    border-radius:8px;
+    border:none;
+    cursor:pointer;
+  }
+
+  /* Event cards */
+  .event-card{
+    background:var(--panel);
+    border:1px solid var(--card-line);
+    border-radius:12px;
+    padding:15px;
+    margin-bottom:10px;
+  }
+  .event-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:11px;
+  }
+  .event-venue{font-size:15px; font-weight:700; letter-spacing:-.1px;}
+  .event-when{font-size:12px; color:var(--muted); margin-top:3px;}
+  .status-pill{
+    font-size:9.5px;
+    font-weight:800;
+    letter-spacing:.5px;
+    padding:3px 8px;
+    border-radius:5px;
+    text-transform:uppercase;
+    white-space:nowrap;
+    border:1px solid transparent;
+  }
+  .status-live{background:rgba(79,224,160,0.1); color:var(--green); border-color:rgba(79,224,160,0.3);}
+  .status-full{background:rgba(224,168,79,0.1); color:var(--amber); border-color:rgba(224,168,79,0.3);}
+  .status-draft{background:rgba(255,255,255,0.05); color:var(--muted); border-color:var(--card-line);}
+  .status-past{background:rgba(255,255,255,0.03); color:var(--muted-dim); border-color:var(--card-line);}
+
+  .mini-tank{
+    height:5px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.06);
+    overflow:hidden;
+    margin-bottom:7px;
+  }
+  .mini-tank-fill{
+    height:100%;
+    border-radius:999px;
+    background:var(--accent-bright);
+  }
+  .mini-count{font-size:11.5px; color:var(--muted);}
+  .mini-count b{color:var(--text); font-weight:700;}
+
+  .card-actions{
+    display:flex;
+    gap:8px;
+    margin-top:13px;
+  }
+  .action-btn{
+    flex:1;
+    text-align:center;
+    padding:9px 0;
+    border-radius:8px;
+    font-size:12px;
+    font-weight:700;
+    border:1px solid var(--card-line);
+    background:transparent;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .action-btn.primary{
+    background:var(--accent-bright);
+    border:none;
+    color:var(--bg);
+  }
+
+  .about summary{
+    list-style:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:11px 14px;
+    background:var(--panel);
+    border:1px solid var(--card-line);
+    border-radius:10px;
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--muted);
+    letter-spacing:.3px;
+  }
+  .about summary::-webkit-details-marker{display:none;}
+  .about .chev{
+    width:8px; height:8px;
+    border-right:1.6px solid var(--muted);
+    border-bottom:1.6px solid var(--muted);
+    transform:rotate(-45deg);
+    transition:transform .25s ease;
+  }
+  .about[open] summary .chev{transform:rotate(45deg);}
+
+  /* ===== Editor shell ===== */
+  .editor{
+    background:var(--panel);
+    border:1px solid var(--card-line);
+    border-radius:14px;
+    margin-top:14px;
+    display:none;
+    overflow:hidden;
+  }
+  .editor.open{display:block;}
+  .editor-head{
+    padding:16px 16px 0;
+  }
+  .editor-title{
+    font-size:14px;
+    font-weight:800;
+    margin-bottom:2px;
+  }
+  .editor-sub{
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:14px;
+    line-height:1.4;
+  }
+
+  .tab-bar{
+    display:flex;
+    gap:2px;
+    padding:0 12px;
+    overflow-x:auto;
+    border-bottom:1px solid var(--card-line);
+    scrollbar-width:none;
+  }
+  .tab-bar::-webkit-scrollbar{display:none;}
+  .tab-btn{
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:10px 12px 11px;
+    background:none;
+    border:none;
+    border-bottom:2px solid transparent;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .tab-btn svg{width:13px; height:13px; opacity:.7;}
+  .tab-btn.active{
+    color:var(--accent-bright);
+    border-bottom-color:var(--accent-bright);
+  }
+  .tab-btn.active svg{opacity:1;}
+
+  .tab-panel{
+    display:none;
+    padding:18px 16px 4px;
+  }
+  .tab-panel.active{display:block;}
+
+  .field{margin-bottom:13px;}
+  .field label{
+    display:block;
+    font-size:10.5px;
+    letter-spacing:.4px;
+    color:var(--muted);
+    margin-bottom:6px;
+    font-weight:600;
+  }
+  .field input, .field textarea, .field select{
+    width:100%;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1px solid var(--card-line);
+    background:var(--bg);
+    color:var(--text);
+    font-size:13.5px;
+    font-family:inherit;
+    resize:vertical;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{
+    outline:none;
+    border-color:var(--accent-bright);
+  }
+  .field-row{display:flex; gap:10px;}
+  .field-row .field{flex:1;}
+
+  .field-group{
+    border:1px solid var(--card-line);
+    border-radius:10px;
+    padding:13px;
+    margin-bottom:14px;
+    background:rgba(255,255,255,0.015);
+  }
+  .field-group-label{
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:var(--muted-dim);
+    margin-bottom:11px;
+  }
+
+  .pkg-edit{
+    border:1px solid var(--card-line);
+    border-radius:10px;
+    padding:12px;
+    margin-bottom:9px;
+    background:rgba(255,255,255,0.015);
+  }
+  .pkg-edit-top{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:9px;
+  }
+  .pkg-edit-top span{font-size:11px; font-weight:700; color:var(--accent-bright); letter-spacing:.3px;}
+  .pkg-remove{
+    font-size:10.5px; color:var(--muted); cursor:pointer; background:none; border:none;
+  }
+  .add-pkg{
+    width:100%;
+    padding:10px;
+    border-radius:9px;
+    border:1px dashed var(--card-line);
+    background:none;
+    color:var(--muted);
+    font-weight:700;
+    font-size:12px;
+    cursor:pointer;
+    margin-bottom:0;
+  }
+
+  .toggle-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border:1px solid var(--card-line);
+    border-radius:10px;
+    padding:12px 13px;
+    margin-bottom:12px;
+    background:rgba(255,255,255,0.015);
+  }
+  .toggle-row-label{font-size:12.5px; font-weight:600;}
+  .toggle-row-sub{font-size:10.5px; color:var(--muted); margin-top:2px;}
+  .switch{
+    width:38px; height:22px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.12);
+    position:relative;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .switch.on{background:var(--accent-bright);}
+  .switch-dot{
+    position:absolute;
+    top:2.5px; left:2.5px;
+    width:17px;height:17px;
+    border-radius:50%;
+    background:#fff;
+    transition:left .2s ease;
+  }
+  .switch.on .switch-dot{left:19px; background:var(--bg);}
+
+  .flyer-upload{
+    border:1px dashed var(--card-line);
+    border-radius:10px;
+    padding:18px;
+    text-align:center;
+    font-size:11.5px;
+    color:var(--muted);
+    margin-bottom:0;
+  }
+
+  .editor-footer{
+    display:flex; gap:9px;
+    padding:14px 16px 16px;
+    border-top:1px solid var(--card-line);
+    margin-top:6px;
+  }
+  .save-btn{
+    flex:2;
+    padding:12px;
+    border-radius:9px;
+    border:none;
+    font-weight:800;
+    font-size:13px;
+    color:var(--bg);
+    background:var(--accent-bright);
+    cursor:pointer;
+  }
+  .copy-btn{
+    flex:1;
+    padding:12px;
+    border-radius:9px;
+    border:1px solid var(--card-line);
+    background:none;
+    color:var(--text);
+    font-weight:700;
+    font-size:12.5px;
+    cursor:pointer;
+  }
+
+  .toast{
+    position:fixed;
+    bottom:22px; left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--panel);
+    border:1px solid var(--card-line);
+    padding:10px 16px;
+    border-radius:9px;
+    font-size:12px;
+    font-weight:600;
+    opacity:0;
+    transition:all .3s ease;
+    pointer-events:none;
+    white-space:nowrap;
+    box-shadow:0 10px 30px rgba(0,0,0,0.5);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* Photo & video approvals */
+  .review-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.3px;
+    color:var(--pink);
+    background:rgba(217,139,160,0.1);
+    border:1px solid rgba(217,139,160,0.3);
+    padding:3px 8px;
+    border-radius:6px;
+  }
+  .review-badge .dot{
+    width:5px;height:5px;border-radius:50%;
+    background:var(--pink);
+  }
+  .review-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:11px;
+  }
+  .review-item{
+    position:relative;
+    aspect-ratio:1/1;
+    border-radius:10px;
+    overflow:hidden;
+    border:1px solid var(--card-line);
+  }
+  .review-bg{position:absolute; inset:0;}
+  .review-bg.r1{background:linear-gradient(145deg,#4a2f12,#a8722a 55%,#e0a84f);}
+  .review-bg.r2{background:linear-gradient(150deg,#2b1a0a,#8a5f24 60%,#d89b3f);}
+  .review-bg.r3{background:linear-gradient(160deg,#3a220c,#b8823a 50%,#ffcf8f);}
+  .review-bg.r4{background:linear-gradient(140deg,#241608,#a06a24 45%,#ff9eb0);}
+
+  /* Package interest */
+  .interest-list{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:11px;
+  }
+  .interest-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:var(--panel);
+    border:1px solid var(--card-line);
+    border-radius:10px;
+    padding:11px 13px;
+  }
+  .interest-item-info{min-width:0;}
+  .interest-item-name{font-size:12.5px; font-weight:700; color:var(--text);}
+  .interest-item-pkg{font-size:11px; color:var(--muted); margin-top:2px;}
+  .interest-item-pkg b{color:var(--accent-bright);}
+  .interest-item-phone{font-size:10.5px; color:var(--accent-bright); margin-top:3px; font-weight:600;}
+  .interest-msg-btn{
+    flex-shrink:0;
+    padding:7px 12px;
+    border-radius:8px;
+    font-size:11px;
+    font-weight:700;
+    border:1px solid var(--card-line);
+    background:none;
+    color:var(--accent-bright);
+    cursor:pointer;
+  }
+
+  .review-uploader{
+    position:absolute;
+    left:7px; top:6px;
+    font-size:9px;
+    font-weight:700;
+    color:rgba(255,255,255,0.9);
+    text-shadow:0 1px 4px rgba(0,0,0,0.6);
+  }
+  .review-play{
+    position:absolute;
+    left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    width:30px; height:30px;
+    border-radius:50%;
+    background:rgba(10,6,18,0.45);
+    border:1.5px solid rgba(255,255,255,0.7);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .review-play svg{width:11px; height:11px; margin-left:2px;}
+  .review-actions{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    display:flex;
+    gap:5px;
+    padding:6px;
+    background:linear-gradient(to top, rgba(0,0,0,0.65), transparent);
+  }
+  .review-actions button{
+    flex:1;
+    padding:6px 0;
+    border-radius:7px;
+    font-size:10px;
+    font-weight:800;
+    border:none;
+    cursor:pointer;
+  }
+  .review-approve{
+    background:var(--accent-bright);
+    color:var(--bg);
+  }
+  .review-reject{
+    background:rgba(255,255,255,0.12);
+    color:#fff;
+  }
+
+  /* ===== Ported race-gauge (guest-side visual, shown per event) ===== */
+  .event-card.tappable{cursor:pointer;}
+  .gauge-peek{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    font-size:11px;
+    font-weight:700;
+    color:var(--accent-bright);
+    margin-top:9px;
+  }
+  .gauge-peek svg{width:11px; height:11px;}
+
+  .gauge-modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.65);
+    z-index:80;
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .gauge-modal-overlay.open{display:flex;}
+  .gauge-modal{
+    width:100%; max-width:430px;
+    background:var(--panel);
+    border-top:1px solid var(--card-line);
+    border-radius:18px 18px 0 0;
+    padding:18px 18px 26px;
+    animation:modal-slide-up .3s ease;
+  }
+  @keyframes modal-slide-up{
+    from{transform:translateY(24px); opacity:0;}
+    to{transform:translateY(0); opacity:1;}
+  }
+  .gauge-modal-head{
+    display:flex; justify-content:space-between; align-items:flex-start;
+    margin-bottom:16px;
+  }
+  .gauge-modal-title{font-size:15px; font-weight:800;}
+  .gauge-modal-sub{font-size:11.5px; color:var(--muted); margin-top:2px;}
+  .gauge-modal-close{
+    width:30px; height:30px; border-radius:8px;
+    background:var(--bg); border:1px solid var(--card-line);
+    color:var(--muted); cursor:pointer; font-size:15px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+
+  .gauge-wrap{
+    position:relative;
+    background:var(--bg);
+    border:1px solid rgba(232,189,118,0.25);
+    border-radius:14px;
+    padding:18px 16px 16px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    overflow:hidden;
+  }
+  .gauge-checker{
+    position:absolute;
+    top:0; left:0; right:0;
+    height:5px;
+    background-image:
+      linear-gradient(45deg, #0a0a0a 25%, transparent 25%, transparent 75%, #0a0a0a 75%, #0a0a0a),
+      linear-gradient(45deg, #0a0a0a 25%, transparent 25%, transparent 75%, #0a0a0a 75%, #0a0a0a);
+    background-size:8px 8px;
+    background-position:0 0, 4px 4px;
+    background-color:#f2f2f2;
+    opacity:.9;
+    z-index:1;
+  }
+  .gauge-wrap.pulse{animation:gauge-hit .5s ease-out;}
+  @keyframes gauge-hit{
+    0%{transform:scale(1); box-shadow:0 0 0 rgba(0,0,0,0);}
+    30%{transform:scale(1.015); box-shadow:0 0 26px rgba(217,139,160,0.35);}
+    100%{transform:scale(1); box-shadow:0 0 0 rgba(0,0,0,0);}
+  }
+  .gauge-info{flex:1; min-width:0;}
+  .gauge-label-row{display:flex; align-items:center; gap:6px; margin-bottom:5px;}
+  .gauge-live-dot{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--pink);
+    box-shadow:0 0 8px var(--pink);
+    flex-shrink:0;
+    animation:live-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes live-pulse{
+    0%,100%{opacity:1; transform:scale(1);}
+    50%{opacity:.35; transform:scale(.65);}
+  }
+  .gauge-info .gauge-label{
+    font-size:10.5px; letter-spacing:1.4px; text-transform:uppercase;
+    font-weight:800; color:var(--muted);
+  }
+  .gauge-info .gauge-count{
+    font-family:var(--display-font);
+    font-size:32px; line-height:1; letter-spacing:.4px;
+    color:var(--text);
+    text-shadow:0 0 20px rgba(217,139,160,0.5);
+    white-space:nowrap;
+  }
+  .gauge-count-caption{
+    font-size:11px; font-weight:700; letter-spacing:.3px;
+    color:var(--text); opacity:.75;
+    margin-bottom:6px; margin-top:1px;
+  }
+  .gauge-count-underline{
+    width:48px; height:4px; border-radius:2px;
+    background:linear-gradient(90deg, var(--accent-bright), var(--pink));
+    margin-bottom:7px;
+  }
+  .gauge-info .gauge-sub{font-size:11px; color:var(--muted); line-height:1.4;}
+
+  .tank-wrap{
+    position:relative;
+    width:42px; height:112px;
+    flex-shrink:0;
+    border-radius:14px 14px 10px 10px;
+    background:linear-gradient(180deg,#241a0e,#120c07);
+    border:1px solid rgba(255,255,255,0.1);
+    box-shadow:inset 0 2px 5px rgba(0,0,0,0.65), inset 0 -1px 0 rgba(255,255,255,0.04);
+    overflow:hidden;
+  }
+  .tank-wrap::before{
+    content:"";
+    position:absolute;
+    top:6px; bottom:6px; left:3px;
+    width:6px; border-radius:8px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.14), transparent 70%);
+    z-index:3; pointer-events:none;
+  }
+  .tank-cap{
+    position:absolute; top:-8px; left:50%;
+    transform:translateX(-50%);
+    width:19px; height:9px;
+    border-radius:4px 4px 0 0;
+    background:linear-gradient(180deg,#3a2a14,#1c130a);
+    border:1px solid rgba(255,255,255,0.12);
+    border-bottom:none;
+    z-index:4;
+  }
+  .tank-fill{
+    position:absolute; left:0; right:0; bottom:0;
+    height:0%;
+    background:linear-gradient(0deg, var(--accent), var(--pink));
+    transition:height 1.8s cubic-bezier(.2,.8,.2,1);
+    overflow:hidden;
+  }
+  .tank-edge{
+    position:absolute; top:-9px; left:-8px;
+    width:calc(100% + 16px); height:18px;
+    background:rgba(255,255,255,0.22);
+    filter:blur(5px);
+    animation:tank-bob 2.6s ease-in-out infinite;
+  }
+  @keyframes tank-bob{
+    0%,100%{transform:translateX(-3px) scaleX(1);}
+    50%{transform:translateX(3px) scaleX(1.08);}
+  }
+  .tank-bubble{
+    position:absolute; bottom:-6px;
+    width:4px; height:4px; border-radius:50%;
+    background:rgba(255,255,255,0.55);
+    animation:tank-bubble-rise 3.2s ease-in infinite;
+  }
+  .tank-bubble.b1{left:8px; animation-delay:.1s;}
+  .tank-bubble.b2{left:20px; width:3px; height:3px; animation-delay:1.1s;}
+  .tank-bubble.b3{left:29px; animation-delay:2s;}
+  @keyframes tank-bubble-rise{
+    0%{transform:translateY(0); opacity:0;}
+    12%{opacity:.8;}
+    90%{opacity:.3;}
+    100%{transform:translateY(-86px); opacity:0;}
+  }
+  .tank-ticks{position:absolute; inset:0; display:flex; flex-direction:column; z-index:2; pointer-events:none;}
+  .tank-ticks span{flex:1; border-bottom:1px solid rgba(255,255,255,0.05);}
+  .tank-ticks span:last-child{border-bottom:none;}
+  .tank-labels{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; justify-content:space-between; align-items:center;
+    padding:7px 0;
+    font-size:8.5px; letter-spacing:1px; font-weight:800;
+    color:rgba(255,255,255,0.5);
+    z-index:3; pointer-events:none;
+  }
+  .tank-stripes{
+    position:absolute; inset:0; z-index:2; pointer-events:none;
+    background-image:repeating-linear-gradient(
+      115deg, rgba(255,255,255,0.09) 0px, rgba(255,255,255,0.09) 3px,
+      transparent 3px, transparent 13px
+    );
+    mix-blend-mode:overlay;
+  }
+  .tank-redline{
+    position:absolute; top:0; left:0; right:0; height:20%;
+    background:repeating-linear-gradient(
+      135deg, rgba(255,70,70,0.4) 0px, rgba(255,70,70,0.4) 5px,
+      rgba(20,8,8,0.4) 5px, rgba(20,8,8,0.4) 10px
+    );
+    z-index:2; pointer-events:none; opacity:.9;
+    border-bottom:1px solid rgba(255,120,120,0.5);
+  }
+  .tank-cap-checker{
+    position:absolute; inset:0; border-radius:inherit;
+    background-image:
+      linear-gradient(45deg, #0a0a0a 25%, transparent 25%, transparent 75%, #0a0a0a 75%, #0a0a0a),
+      linear-gradient(45deg, #0a0a0a 25%, transparent 25%, transparent 75%, #0a0a0a 75%, #0a0a0a);
+    background-size:6px 6px;
+    background-position:0 0, 3px 3px;
+    background-color:#eee;
+    opacity:.85;
+  }
+  .tank-wrap.overflow{
+    box-shadow:inset 0 2px 5px rgba(0,0,0,0.65), inset 0 -1px 0 rgba(255,255,255,0.04), 0 0 20px rgba(217,139,160,0.4);
+    animation:tank-shake .5s ease-in-out;
+  }
+  @keyframes tank-shake{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-2px);}
+    75%{transform:translateX(2px);}
+  }
+  .tank-wrap.overflow .tank-cap{
+    animation:cap-pop .6s cubic-bezier(.34,1.56,.64,1) both;
+    box-shadow:0 0 14px var(--pink);
+  }
+  @keyframes cap-pop{
+    0%{transform:translateX(-50%) translateY(0) rotate(0deg);}
+    40%{transform:translateX(-50%) translateY(-6px) rotate(-8deg);}
+    100%{transform:translateX(-50%) translateY(-3px) rotate(-4deg);}
+  }
+  .tank-fill.overflow-fill{
+    background:linear-gradient(0deg, var(--accent-bright), var(--pink) 60%, #fff);
+  }
+  .tank-burst{position:absolute; top:-9px; left:50%; width:2px; height:2px; pointer-events:none; z-index:5;}
+  .tank-burst span{
+    position:absolute; top:0; left:0;
+    width:5px; height:5px; border-radius:50%;
+    background:radial-gradient(circle, #fff, var(--pink));
+    opacity:0;
+  }
+  .tank-wrap.overflow .tank-burst span{animation:burst-spark .9s ease-out both;}
+  .tank-burst span:nth-child(1){--tx:-18px; --ty:-26px; animation-delay:.05s;}
+  .tank-burst span:nth-child(2){--tx:3px; --ty:-32px; animation-delay:.1s;}
+  .tank-burst span:nth-child(3){--tx:20px; --ty:-24px; animation-delay:.02s;}
+  .tank-burst span:nth-child(4){--tx:-11px; --ty:-18px; animation-delay:.18s;}
+  .tank-burst span:nth-child(5){--tx:13px; --ty:-16px; animation-delay:.14s;}
+  @keyframes burst-spark{
+    0%{opacity:1; transform:translate(0,0) scale(1);}
+    100%{opacity:0; transform:translate(var(--tx), var(--ty)) scale(.3);}
+  }
+  .gauge-count.overflow-text{color:var(--pink);}
+
+  /* Host tab */
+  .host-avatar-row{
+    display:flex;
+    align-items:center;
+    gap:13px;
+    margin-bottom:16px;
+  }
+  .host-avatar-preview{
+    width:50px; height:50px;
+    border-radius:10px;
+    background:var(--bg);
+    border:1px solid var(--card-line);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .host-avatar-preview svg{width:22px; height:22px; color:var(--muted);}
+  .host-avatar-change{
+    font-size:11.5px;
+    font-weight:700;
+    color:var(--accent-bright);
+    background:none;
+    border:1px solid var(--card-line);
+    padding:8px 12px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+
+  .handle-row{display:flex; gap:8px;}
+  .handle-row .field{flex:1; margin-bottom:0;}
+  .handle-row select{cursor:pointer;}
+  .platform-field{max-width:118px;}
+
+  .host-link-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    margin-top:10px;
+    padding:7px 12px;
+    border-radius:999px;
+    border:1px solid var(--card-line);
+    background:var(--bg);
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--text);
+    text-decoration:none;
+  }
+  .host-link-pill .plat-dot{width:7px; height:7px; border-radius:50%; background:var(--accent-bright); flex-shrink:0;}
+  .host-link-pill .plat-tag{color:var(--muted);}
+  .host-link-pill .go-arrow{color:var(--muted-dim); margin-left:2px;}
+
+  .strip-edit-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .strip-edit-row input{
+    flex:1;
+    padding:9px 11px;
+    border-radius:8px;
+    border:1px solid var(--card-line);
+    background:var(--bg);
+    color:var(--text);
+    font-size:12px;
+  }
+  .strip-edit-thumb{
+    width:32px; height:32px;
+    border-radius:7px;
+    flex-shrink:0;
+    background:linear-gradient(150deg,#2b1a0a,#8a5f24 60%,#d89b3f);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .strip-edit-thumb svg{width:13px; height:13px; color:rgba(255,255,255,0.55);}
+  .strip-remove{
+    background:none; border:none; color:var(--muted-dim); font-size:10.5px; cursor:pointer; flex-shrink:0;
+  }
+  .add-tile{
+    width:100%;
+    padding:9px;
+    border-radius:8px;
+    border:1px dashed var(--card-line);
+    background:none;
+    color:var(--muted);
+    font-weight:700;
+    font-size:11.5px;
+    cursor:pointer;
+    margin-top:2px;
+  }
+
+  /* Sign-up form mode */
+  .mode-options{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .mode-option{
+    display:flex;
+    align-items:flex-start;
+    gap:11px;
+    padding:12px 13px;
+    border-radius:10px;
+    border:1px solid var(--card-line);
+    cursor:pointer;
+  }
+  .mode-option.selected{
+    border-color:var(--accent-bright);
+    background:rgba(201,154,79,0.08);
+  }
+  .mode-radio{
+    width:16px; height:16px;
+    border-radius:50%;
+    border:1.5px solid var(--card-line);
+    flex-shrink:0;
+    margin-top:1px;
+    position:relative;
+  }
+  .mode-option.selected .mode-radio{border-color:var(--accent-bright);}
+  .mode-option.selected .mode-radio::after{
+    content:'';
+    position:absolute; inset:3px;
+    border-radius:50%;
+    background:var(--accent-bright);
+  }
+  .mode-option-title{font-size:12.5px; font-weight:700;}
+  .mode-option-sub{font-size:10.5px; color:var(--muted); margin-top:2px; line-height:1.4;}
+
+  /* Theme picker */
+  .palette-row{
+    display:flex;
+    gap:9px;
+    flex-wrap:wrap;
+  }
+  .palette-swatch{
+    width:62px;
+    padding:8px 6px 9px;
+    border-radius:10px;
+    border:1px solid var(--card-line);
+    cursor:pointer;
+    text-align:center;
+  }
+  .palette-swatch.selected{border-color:var(--accent-bright);}
+  .palette-dots{
+    display:flex;
+    gap:3px;
+    justify-content:center;
+    margin-bottom:6px;
+  }
+  .palette-dot{width:13px; height:13px; border-radius:50%;}
+  .palette-swatch-label{font-size:9px; color:var(--muted); font-weight:700;}
+  .palette-swatch.selected .palette-swatch-label{color:var(--text);}
+  .palette-lock{
+    font-size:8px;
+    color:var(--muted-dim);
+    margin-top:2px;
+    font-weight:700;
+  }
+
+  /* ================= AESTHETIC OVERLAY — Thrasher × Entergalactic (experiment) ================= */
+  /* Loud, frame-breaking type + graphic marks over a warm cinematic backdrop. Structure/inputs stay organized. */
+  body{
+    background:
+      radial-gradient(120% 78% at 50% -12%, rgba(255,205,130,0.20), transparent 52%),
+      radial-gradient(85% 55% at 88% 6%, rgba(217,139,160,0.16), transparent 60%),
+      linear-gradient(180deg,#241a12 0%, #150d0a 42%, #0c0807 100%);
+  }
+  #grain{
+    position:fixed; inset:0; z-index:60; pointer-events:none;
+    opacity:.4; mix-blend-mode:soft-light;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size:160px 160px;
+  }
+  .toast{z-index:90;}
+  .phone{position:relative;}
+  .phone > *{position:relative; z-index:1;}
+  .atmos{
+    position:absolute; top:0; left:0; right:0; height:158px;
+    z-index:0 !important; pointer-events:none; overflow:hidden;
+  }
+  .atmos .sun{
+    position:absolute; top:-46px; left:50%; transform:translateX(-50%);
+    width:210px; height:210px; border-radius:50%;
+    background:radial-gradient(circle, rgba(255,222,162,0.72), rgba(232,150,112,0.22) 45%, transparent 70%);
+    filter:blur(3px);
+  }
+  .atmos .horizon{
+    position:absolute; left:0; right:0; bottom:0; height:120px;
+    background:linear-gradient(180deg, rgba(255,186,116,0.34) 0%, rgba(228,140,110,0.16) 50%, transparent 100%);
+  }
+  .atmos svg{position:absolute; bottom:0; left:0; width:100%; height:66px; display:block;}
+  .atmos .fade{position:absolute; inset:0; background:linear-gradient(180deg, transparent 46%, var(--bg) 99%);}
+
+  /* Loud, frame-breaking section headlines (Thrasher type) */
+  .section-head, .section-label-wrap{overflow:visible;}
+  .section-head{gap:12px;}
+  .section-label-wrap{min-width:0;}
+  .section-label-wrap svg{width:15px; height:15px; color:var(--accent-bright); opacity:1;}
+  .section-label{
+    font-family:'Anton', sans-serif; font-weight:400;
+    font-size:26px; line-height:.92; letter-spacing:.6px;
+    text-transform:uppercase; color:var(--text);
+    transform:skewX(-6deg); margin-left:-2px; white-space:nowrap;
+    text-shadow:2px 2px 0 var(--accent), 3px 3px 0 rgba(0,0,0,0.35);
+  }
+  .new-btn, .review-badge{flex-shrink:0;}
+
+  /* Loud stat numbers */
+  .stat-num{font-family:'Bebas Neue', sans-serif; font-size:38px; line-height:.85; letter-spacing:1px;}
+  .stat-label{text-transform:uppercase; letter-spacing:1px;}
+
+  /* Event cards — pasted-sticker energy, structure stays put */
+  .event-card{overflow:visible; position:relative;}
+  .event-venue{
+    font-family:'Anton', sans-serif; font-weight:400;
+    font-size:20px; line-height:1; letter-spacing:.3px;
+    text-transform:uppercase; transform:skewX(-4deg);
+  }
+  .event-card::after{
+    content:''; position:absolute; right:12px; top:12px;
+    width:50px; height:50px; pointer-events:none; opacity:.45; z-index:0;
+    background-image:radial-gradient(var(--accent-bright) 1.1px, transparent 1.4px);
+    background-size:6px 6px;
+    -webkit-mask:radial-gradient(circle at 100% 0, #000 55%, transparent 70%);
+            mask:radial-gradient(circle at 100% 0, #000 55%, transparent 70%);
+  }
+
+  /* Sticker status pills */
+  .status-pill{
+    font-family:'Anton', sans-serif; font-weight:400;
+    letter-spacing:1px; padding:4px 9px 3px; border-width:1.5px;
+    transform:rotate(-4deg); box-shadow:1.5px 1.5px 0 rgba(0,0,0,0.4);
+  }
+  .status-live{background:var(--green); color:#0b1a12; border-color:#0b1a12;}
+
+  /* Chunky uppercase buttons with a printed offset */
+  .new-btn, .action-btn.primary, .save-btn, .interest-msg-btn, .review-approve{
+    text-transform:uppercase; letter-spacing:.6px; font-weight:800;
+  }
+  .new-btn, .action-btn.primary, .save-btn{box-shadow:2px 2px 0 rgba(0,0,0,0.45);}
+
+  /* Header stamp */
+  .dash-tag{transform:rotate(-3deg); box-shadow:1.5px 1.5px 0 rgba(0,0,0,0.35);}
+  .brand-hi b{font-family:'Anton', sans-serif; font-weight:400; font-size:16px; letter-spacing:.5px;}
+
+  /* Editor: loud headers, but inputs stay clean + legible */
+  .editor-title{
+    font-family:'Anton', sans-serif; font-weight:400; font-size:19px;
+    text-transform:uppercase; letter-spacing:.4px; transform:skewX(-4deg);
+  }
+  .tab-btn{text-transform:uppercase; letter-spacing:.5px; font-weight:700;}
+  .field-group-label{color:var(--accent-bright);}
+
+  /* Gauge modal picks up the loud type */
+  .gauge-modal-title{font-family:'Anton', sans-serif; font-weight:400; text-transform:uppercase; letter-spacing:.5px;}
+</style>
+</head>
+<body>
+
+<div id="grain" aria-hidden="true"></div>
+
+<div class="phone">
+  <div class="atmos" aria-hidden="true">
+    <div class="sun"></div>
+    <div class="horizon"></div>
+    <svg viewBox="0 0 430 120" preserveAspectRatio="none">
+      <path fill="#0a0605" d="M0,120 L0,74 L26,74 L26,58 L54,58 L54,84 L86,84 L86,44 L112,44 L112,64 L143,64 L143,32 L168,32 L168,60 L198,60 L198,50 L228,50 L228,76 L258,76 L258,38 L286,38 L286,66 L316,66 L316,52 L346,52 L346,70 L376,70 L376,46 L406,46 L406,78 L430,78 L430,120 Z"/>
+      <g fill="rgba(255,216,152,0.85)">
+        <rect x="91" y="52" width="3" height="5"/><rect x="99" y="52" width="3" height="5"/><rect x="91" y="62" width="3" height="5"/>
+        <rect x="149" y="42" width="3" height="5"/><rect x="157" y="50" width="3" height="5"/>
+        <rect x="204" y="58" width="3" height="5"/><rect x="212" y="58" width="3" height="5"/>
+        <rect x="263" y="46" width="3" height="5"/><rect x="271" y="56" width="3" height="5"/><rect x="263" y="64" width="3" height="5"/>
+        <rect x="351" y="60" width="3" height="5"/><rect x="381" y="54" width="3" height="5"/><rect x="389" y="62" width="3" height="5"/>
+      </g>
+    </svg>
+    <div class="fade"></div>
+  </div>
+
+  <div class="topbar">
+    <div class="brand-lockup">
+      <div class="brand-mark">G</div>
+      <div class="brand-hi">Welcome back<b>@inaki</b></div>
+      <span class="dash-tag">Host tools</span>
+    </div>
+    <div class="bell"><span class="bell-dot"></span>
+      <svg viewBox="0 0 24 24"><path d="M12 3a5 5 0 00-5 5v3.5c0 .8-.3 1.6-.9 2.2L4.5 15.5h15l-1.6-1.8a3 3 0 01-.9-2.2V8a5 5 0 00-5-5z"/><path d="M9.5 18.5a2.5 2.5 0 005 0"/></svg>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Gassed up this month</div>
+      <div class="stat-num">87</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Upcoming events</div>
+      <div class="stat-num">2</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-label-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+        <div class="section-label">This week</div>
+      </div>
+      <button class="new-btn">+ New event</button>
+    </div>
+
+    <div class="event-card tappable" onclick="openGaugeModal({venue:'The Parlour', label:'70s Thursdays', when:'Thursday, July 16 · Doors 9PM', count:23, target:40})">
+      <div class="event-top">
+        <div>
+          <div class="event-venue">The Parlour — 70s Thursdays</div>
+          <div class="event-when">Thursday, July 16 · Doors 9PM</div>
+        </div>
+        <span class="status-pill status-live">Live</span>
+      </div>
+      <div class="mini-tank"><div class="mini-tank-fill" style="width:57%"></div></div>
+      <div class="mini-count"><b>23 / 40</b> gassed up</div>
+      <div class="gauge-peek">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
+        Tap to view the live gauge
+      </div>
+      <div class="card-actions">
+        <button class="action-btn primary" onclick="event.stopPropagation(); toggleEditor()">Edit event</button>
+        <button class="action-btn" onclick="event.stopPropagation(); showToast('Sign-up list opened')">View list</button>
+      </div>
+    </div>
+
+    <div class="event-card">
+      <div class="event-top">
+        <div>
+          <div class="event-venue">The Parlour — Late Kitchen Fridays</div>
+          <div class="event-when">Friday, July 24 · Doors 10PM</div>
+        </div>
+        <span class="status-pill status-draft">Draft</span>
+      </div>
+      <div class="mini-count" style="margin-top:2px;">Not published yet — link isn't live</div>
+      <div class="card-actions">
+        <button class="action-btn primary">Finish setup</button>
+        <button class="action-btn">Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <details class="about">
+      <summary>Past events <span class="chev"></span></summary>
+    </details>
+    <div class="event-card tappable" style="margin-top:8px;" onclick="openGaugeModal({venue:'The Parlour', label:'70s Thursdays', when:'Thursday, July 9 · Doors 9PM', count:41, target:40})">
+      <div class="event-top">
+        <div>
+          <div class="event-venue">The Parlour — 70s Thursdays</div>
+          <div class="event-when">Thursday, July 9 · Doors 9PM</div>
+        </div>
+        <span class="status-pill status-past">Past</span>
+      </div>
+      <div class="mini-count"><b>41 / 40</b> gassed up</div>
+      <div class="gauge-peek">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18l6-6-6-6"/></svg>
+        Tap to view the final gauge
+      </div>
+      <div class="card-actions">
+        <button class="action-btn" onclick="event.stopPropagation(); showToast('New event started from this one')">Duplicate</button>
+        <button class="action-btn" onclick="event.stopPropagation()">View list</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-label-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><circle cx="12" cy="11" r="3.2"/></svg>
+        <div class="section-label">Photos &amp; videos</div>
+      </div>
+      <span class="review-badge"><span class="dot"></span>4 pending</span>
+    </div>
+    <div class="mini-count" style="margin-bottom:2px;">From 70s Thursdays, July 9 — approve what goes up on the event page.</div>
+    <div class="review-grid">
+      <div class="review-item">
+        <div class="review-bg r1"></div>
+        <div class="review-uploader">@disco.dani</div>
+        <div class="review-actions">
+          <button class="review-approve" onclick="showToast('Approved — now live on the event page')">Approve</button>
+          <button class="review-reject" onclick="showToast('Rejected')">Reject</button>
+        </div>
+      </div>
+      <div class="review-item">
+        <div class="review-bg r2"></div>
+        <div class="review-uploader">@inaki</div>
+        <div class="review-actions">
+          <button class="review-approve" onclick="showToast('Approved — now live on the event page')">Approve</button>
+          <button class="review-reject" onclick="showToast('Rejected')">Reject</button>
+        </div>
+      </div>
+      <div class="review-item">
+        <div class="review-bg r3"></div>
+        <div class="review-uploader">@yungbrix</div>
+        <div class="review-play"><svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div>
+        <div class="review-actions">
+          <button class="review-approve" onclick="showToast('Approved — now live on the event page')">Approve</button>
+          <button class="review-reject" onclick="showToast('Rejected')">Reject</button>
+        </div>
+      </div>
+      <div class="review-item">
+        <div class="review-bg r4"></div>
+        <div class="review-uploader">@parlourregular</div>
+        <div class="review-actions">
+          <button class="review-approve" onclick="showToast('Approved — now live on the event page')">Approve</button>
+          <button class="review-reject" onclick="showToast('Rejected')">Reject</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-label-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2c1 3-2 4-2 7a4 4 0 108 0c0-1-.5-2-1-2 .3 1.5-.5 2.5-1.5 2.5C16.8 7 17 4.5 15 3c.5 1.5-.3 2.6-1.3 3.6C12.6 7.7 12 8.8 12 10a4 4 0 01-4-4c0-2 1-3.5 2-4-1.5.3-5 2.3-5 7a7 7 0 1014 0c0-4-2.5-6-3-7 .2 1-.2 2-1 2.3.2-1 0-2-1-2.3z"/></svg>
+        <div class="section-label">Package interest</div>
+      </div>
+      <span class="review-badge"><span class="dot"></span>3 new</span>
+    </div>
+    <div class="mini-count" style="margin-bottom:2px;">From 70s Thursdays, July 16 — they left a number, reach out before they change their mind.</div>
+    <div class="interest-list">
+      <div class="interest-item">
+        <div class="interest-item-info">
+          <div class="interest-item-name">Malik</div>
+          <div class="interest-item-pkg">Interested in <b>Disco Table</b> — $400</div>
+          <div class="interest-item-phone">(416) 555-0114</div>
+        </div>
+        <button class="interest-msg-btn" onclick="showToast('Calling (416) 555-0114…')">Call</button>
+      </div>
+      <div class="interest-item">
+        <div class="interest-item-info">
+          <div class="interest-item-name">Priya</div>
+          <div class="interest-item-pkg">Interested in <b>Studio 70 Table</b> — $550</div>
+          <div class="interest-item-phone">(647) 555-0138</div>
+        </div>
+        <button class="interest-msg-btn" onclick="showToast('Calling (647) 555-0138…')">Call</button>
+      </div>
+      <div class="interest-item">
+        <div class="interest-item-info">
+          <div class="interest-item-name">Devon</div>
+          <div class="interest-item-pkg">Interested in <b>Groove Table</b> — $250</div>
+          <div class="interest-item-phone">(905) 555-0192</div>
+        </div>
+        <button class="interest-msg-btn" onclick="showToast('Calling (905) 555-0192…')">Call</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="editorSection">
+    <div class="editor" id="editorCard">
+
+      <div class="editor-head">
+        <div class="editor-title">Edit — The Parlour, 70s Thursdays, July 16</div>
+        <div class="editor-sub">Every field here is what shows on your public page. You can change anything, anytime — even after it's posted.</div>
+      </div>
+
+      <div class="tab-bar" id="tabBar">
+        <button class="tab-btn active" data-tab="basics" onclick="selectTab(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+          Basics
+        </button>
+        <button class="tab-btn" data-tab="host" onclick="selectTab(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/></svg>
+          Host
+        </button>
+        <button class="tab-btn" data-tab="packages" onclick="selectTab(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-5 9 5-9 5-9-5z"/><path d="M3 9v6l9 5 9-5V9"/></svg>
+          Packages
+        </button>
+        <button class="tab-btn" data-tab="theme" onclick="selectTab(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 000 18 2.2 2.2 0 001.6-3.7 1.6 1.6 0 011.2-2.7H17a4 4 0 004-4 8 8 0 00-9-7.6z"/></svg>
+          Theme
+        </button>
+        <button class="tab-btn" data-tab="settings" onclick="selectTab(this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.6 7.6 0 000-2l2-1.5-2-3.5-2.4 1a7.7 7.7 0 00-1.7-1L15 3h-6l-.3 2.5a7.7 7.7 0 00-1.7 1l-2.4-1-2 3.5L4.6 11a7.6 7.6 0 000 2l-2 1.5 2 3.5 2.4-1a7.7 7.7 0 001.7 1L9 21h6l.3-2.5a7.7 7.7 0 001.7-1l2.4 1 2-3.5-2-1.5z"/></svg>
+          Settings
+        </button>
+      </div>
+
+      <!-- ===== BASICS ===== -->
+      <div class="tab-panel active" data-panel="basics">
+        <div class="field"><label>Venue name</label><input type="text" value="The Parlour"></div>
+        <div class="field"><label>Address</label><input type="text" value="King St W, Toronto"></div>
+        <div class="field-row">
+          <div class="field"><label>Date</label><input type="text" value="Thursday, July 16"></div>
+          <div class="field"><label>Doors</label><input type="text" value="9:00 PM"></div>
+        </div>
+        <div class="field"><label>Entry info</label><input type="text" value="Dinner seating from 6PM · Late night from 10PM · 19+"></div>
+        <div class="field">
+          <label>Description</label>
+          <textarea rows="3">A King West restaurant that turns into a night-service scene after dark — bottle service, flowers on every table, a menu that stays open late. Bright and plant-filled by day, moody and pink-lit once the kitchen winds down and the tables get pushed back.</textarea>
+        </div>
+        <div class="field" style="margin-bottom:0;"><label>Tonight's hook (optional)</label><input type="text" value="70s Thursdays — disco ball's up, dress the part if you've got it"></div>
+      </div>
+
+      <!-- ===== HOST ===== -->
+      <div class="tab-panel" data-panel="host">
+        <div class="field-group">
+          <div class="field-group-label">Identity</div>
+          <div class="host-avatar-row">
+            <div class="host-avatar-preview"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.4 0-8 2.2-8 5v1a2 2 0 002 2h12a2 2 0 002-2v-1c0-2.8-3.6-5-8-5z"/></svg></div>
+            <button class="host-avatar-change" onclick="showToast('Photo upload coming soon — styled placeholder for now')">Change avatar</button>
+          </div>
+          <div class="field" style="margin-bottom:0;"><label>Tagline (short, personal — not the venue bio)</label><input type="text" value="The Thursday night King West knows to save room for."></div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-group-label">Handle &amp; link</div>
+          <div class="handle-row">
+            <div class="field platform-field">
+              <label>Platform</label>
+              <select id="hostPlatform" onchange="updateHostLink()">
+                <option value="instagram">Instagram</option>
+                <option value="snapchat">Snapchat</option>
+                <option value="tiktok">TikTok</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Handle</label>
+              <input type="text" id="hostHandleInput" value="inaki" oninput="updateHostLink()">
+            </div>
+          </div>
+          <a class="host-link-pill" id="hostLinkPill" href="https://instagram.com/inaki" target="_blank" rel="noopener">
+            <span class="plat-dot"></span>
+            <span id="hostLinkText">@inaki</span>
+            <span class="plat-tag" id="hostLinkPlat">· Instagram</span>
+            <span class="go-arrow">↗</span>
+          </a>
+          <div class="field" style="margin-top:12px; margin-bottom:0;"><label>About your host</label>
+            <textarea rows="2">@inaki has been running 70s Thursdays at The Parlour, known for keeping the table full and the room moving. Questions before tonight — reach out directly.</textarea>
+          </div>
+        </div>
+
+        <div class="field-group" style="margin-bottom:0;">
+          <div class="field-group-label">Past nights strip</div>
+          <div class="strip-edit-row">
+            <div class="strip-edit-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.2"/></svg></div>
+            <input type="text" value="70s Thurs — Jul 9">
+            <button class="strip-remove" onclick="this.closest('.strip-edit-row').remove()">Remove</button>
+          </div>
+          <div class="strip-edit-row">
+            <div class="strip-edit-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.2"/></svg></div>
+            <input type="text" value="70s Thurs — Jul 2">
+            <button class="strip-remove" onclick="this.closest('.strip-edit-row').remove()">Remove</button>
+          </div>
+          <div class="strip-edit-row">
+            <div class="strip-edit-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.2"/></svg></div>
+            <input type="text" value="70s Thurs — Jun 25">
+            <button class="strip-remove" onclick="this.closest('.strip-edit-row').remove()">Remove</button>
+          </div>
+          <div class="strip-edit-row">
+            <div class="strip-edit-thumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h3l1.5-2h7L17 7h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V8a1 1 0 011-1z"/><circle cx="12" cy="13" r="3.2"/></svg></div>
+            <input type="text" value="70s Thurs — Jun 18">
+            <button class="strip-remove" onclick="this.closest('.strip-edit-row').remove()">Remove</button>
+          </div>
+          <button class="add-tile" onclick="showToast('Tile added — upload a real photo any time')">+ Add a past night</button>
+        </div>
+      </div>
+
+      <!-- ===== PACKAGES ===== -->
+      <div class="tab-panel" data-panel="packages">
+        <div class="pkg-edit">
+          <div class="pkg-edit-top"><span>Groove Table</span><button class="pkg-remove">Remove</button></div>
+          <div class="field-row">
+            <div class="field"><input type="text" value="Groove Table" placeholder="Name"></div>
+            <div class="field" style="max-width:90px;"><input type="text" value="$250" placeholder="Price"></div>
+          </div>
+          <div class="field" style="margin-bottom:0;"><input type="text" value="House wine + mixers, table for up to 6" placeholder="What's included"></div>
+        </div>
+        <div class="pkg-edit">
+          <div class="pkg-edit-top"><span>Disco Table</span><button class="pkg-remove">Remove</button></div>
+          <div class="field-row">
+            <div class="field"><input type="text" value="Disco Table" placeholder="Name"></div>
+            <div class="field" style="max-width:90px;"><input type="text" value="$400" placeholder="Price"></div>
+          </div>
+          <div class="field" style="margin-bottom:0;"><input type="text" value="Tequila + mixers, sparkler service, table for up to 8" placeholder="What's included"></div>
+        </div>
+        <div class="pkg-edit" style="margin-bottom:0;">
+          <div class="pkg-edit-top"><span>Studio 70 Table</span><button class="pkg-remove">Remove</button></div>
+          <div class="field-row">
+            <div class="field"><input type="text" value="Studio 70 Table" placeholder="Name"></div>
+            <div class="field" style="max-width:90px;"><input type="text" value="$550" placeholder="Price"></div>
+          </div>
+          <div class="field" style="margin-bottom:0;"><input type="text" value="Casamigos + full mixer set, front-of-house table, up to 10" placeholder="What's included"></div>
+        </div>
+        <button class="add-pkg" style="margin-top:9px;">+ Add another package</button>
+      </div>
+
+      <!-- ===== THEME ===== -->
+      <div class="tab-panel" data-panel="theme">
+        <div class="field-group-label" style="margin-bottom:9px;">Page theme</div>
+        <div style="font-size:11px; color:var(--muted); line-height:1.5; margin-bottom:13px;">Same Gassed mechanics (gauge, fog reveal, watermark) on every theme — just the color mood changes to match the night.</div>
+        <div class="palette-row">
+          <div class="palette-swatch selected" onclick="selectPalette(this)">
+            <div class="palette-dots">
+              <div class="palette-dot" style="background:#b8823a"></div>
+              <div class="palette-dot" style="background:#f5c86b"></div>
+              <div class="palette-dot" style="background:#ff9eb0"></div>
+            </div>
+            <div class="palette-swatch-label">Amber</div>
+          </div>
+          <div class="palette-swatch" onclick="selectPalette(this)">
+            <div class="palette-dots">
+              <div class="palette-dot" style="background:#8b2fff"></div>
+              <div class="palette-dot" style="background:#b565ff"></div>
+              <div class="palette-dot" style="background:#ff4fd8"></div>
+            </div>
+            <div class="palette-swatch-label">Violet</div>
+          </div>
+          <div class="palette-swatch" onclick="selectPalette(this)">
+            <div class="palette-dots">
+              <div class="palette-dot" style="background:#0fae7a"></div>
+              <div class="palette-dot" style="background:#4fe0c0"></div>
+              <div class="palette-dot" style="background:#7effea"></div>
+            </div>
+            <div class="palette-swatch-label">Neon</div>
+            <div class="palette-lock">PRO</div>
+          </div>
+          <div class="palette-swatch" onclick="selectPalette(this)">
+            <div class="palette-dots">
+              <div class="palette-dot" style="background:#c2273f"></div>
+              <div class="palette-dot" style="background:#ff5468"></div>
+              <div class="palette-dot" style="background:#ffb54f"></div>
+            </div>
+            <div class="palette-swatch-label">Red Room</div>
+            <div class="palette-lock">PRO</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SETTINGS ===== -->
+      <div class="tab-panel" data-panel="settings">
+        <div class="field-group">
+          <div class="field-group-label">Sign-up form</div>
+          <div style="font-size:11px; color:var(--muted); line-height:1.5; margin-bottom:11px;">Trial mode keeps the ask small for a first event. Full mode is the steady-state version once you're ready for a real contactable list.</div>
+          <div class="mode-options">
+            <div class="mode-option selected" onclick="selectMode(this)">
+              <div class="mode-radio"></div>
+              <div>
+                <div class="mode-option-title">Trial — name only</div>
+                <div class="mode-option-sub">"I'm gassed — I'm coming." No phone, no Instagram. Guests still leave a number if they express interest in a table.</div>
+              </div>
+            </div>
+            <div class="mode-option" onclick="selectMode(this)">
+              <div class="mode-radio"></div>
+              <div>
+                <div class="mode-option-title">Full — name + phone + Instagram (optional)</div>
+                <div class="mode-option-sub">Steady-state version. Real door list, reminder-text-ready contacts.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-group-label">Gassed-up gauge</div>
+          <div style="font-size:11px; color:var(--muted); line-height:1.5; margin-bottom:11px;">The number the tank is racing toward. Set it a little below what you actually expect — a tank that overflows reads better than one that never fills.</div>
+          <div class="field" style="margin-bottom:0; max-width:140px;"><label>Target spots</label><input type="text" value="40"></div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-group-label">Flyer</div>
+          <div class="flyer-upload">Flyer photo — tap to upload</div>
+        </div>
+
+        <div class="toggle-row" style="margin-bottom:0;">
+          <div>
+            <div class="toggle-row-label">Sign-ups open</div>
+            <div class="toggle-row-sub">Turn off to mark the list full</div>
+          </div>
+          <div class="switch on" onclick="this.classList.toggle('on')"><div class="switch-dot"></div></div>
+        </div>
+      </div>
+
+      <div class="editor-footer">
+        <button class="save-btn" onclick="showToast('Changes saved')">Save changes</button>
+        <button class="copy-btn" onclick="showToast('Link copied')">Copy link</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="gauge-modal-overlay" id="gaugeModalOverlay" onclick="if(event.target===this) closeGaugeModal()">
+  <div class="gauge-modal">
+    <div class="gauge-modal-head">
+      <div>
+        <div class="gauge-modal-title" id="gaugeModalTitle">The Parlour — 70s Thursdays</div>
+        <div class="gauge-modal-sub" id="gaugeModalSub">Thursday, July 16 · Doors 9PM</div>
+      </div>
+      <button class="gauge-modal-close" onclick="closeGaugeModal()">✕</button>
+    </div>
+
+    <div class="gauge-wrap" id="gaugeWrap">
+      <div class="gauge-checker"></div>
+      <div class="gauge-info">
+        <div class="gauge-label-row">
+          <span class="gauge-live-dot"></span>
+          <div class="gauge-label" id="gaugeLabel">Spots filling up</div>
+        </div>
+        <div class="gauge-count" id="gaugeText" data-count="23" data-target="40"><span id="gaugeNum">23 / 40</span></div>
+        <div class="gauge-count-caption">gassed up</div>
+        <div class="gauge-count-underline"></div>
+        <div class="gauge-sub" id="gaugeSub">Live count from the public page — no refresh needed.</div>
+      </div>
+      <div class="tank-wrap" id="tankWrap">
+        <div class="tank-cap"><div class="tank-cap-checker"></div></div>
+        <div class="tank-fill" id="gaugeFill">
+          <div class="tank-edge"></div>
+          <div class="tank-bubble b1"></div>
+          <div class="tank-bubble b2"></div>
+          <div class="tank-bubble b3"></div>
+        </div>
+        <div class="tank-redline"></div>
+        <div class="tank-stripes"></div>
+        <div class="tank-burst" id="tankBurst"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="tank-ticks"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="tank-labels"><span>F</span><span>E</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function toggleEditor(){
+  const el = document.getElementById('editorCard');
+  el.classList.toggle('open');
+  if(el.classList.contains('open')){
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+function selectMode(el){
+  document.querySelectorAll('.mode-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function selectPalette(el){
+  document.querySelectorAll('.palette-swatch').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function selectTab(btn){
+  const tab = btn.dataset.tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelector('.tab-panel[data-panel="' + tab + '"]').classList.add('active');
+}
+
+const PLATFORM_URLS = {
+  instagram: (h) => 'https://instagram.com/' + h,
+  snapchat: (h) => 'https://snapchat.com/add/' + h,
+  tiktok: (h) => 'https://tiktok.com/@' + h
+};
+const PLATFORM_LABELS = { instagram: 'Instagram', snapchat: 'Snapchat', tiktok: 'TikTok' };
+
+function updateHostLink(){
+  const platform = document.getElementById('hostPlatform').value;
+  const handleRaw = document.getElementById('hostHandleInput').value.trim().replace(/^@/, '');
+  const handle = handleRaw || 'yourhandle';
+  const pill = document.getElementById('hostLinkPill');
+  pill.href = PLATFORM_URLS[platform](handle);
+  document.getElementById('hostLinkText').textContent = '@' + handle;
+  document.getElementById('hostLinkPlat').textContent = '· ' + PLATFORM_LABELS[platform];
+}
+
+/* ===== Per-event gauge modal — same race-gauge visual guests see, run off the promoter's real numbers ===== */
+function openGaugeModal(evt){
+  document.getElementById('gaugeModalTitle').textContent = evt.venue + ' — ' + evt.label;
+  document.getElementById('gaugeModalSub').textContent = evt.when;
+
+  const gaugeText = document.getElementById('gaugeText');
+  const gaugeFill = document.getElementById('gaugeFill');
+  const gaugeSub = document.getElementById('gaugeSub');
+  const tankWrap = document.getElementById('tankWrap');
+
+  gaugeText.dataset.count = evt.count;
+  gaugeText.dataset.target = evt.target;
+  gaugeText.classList.remove('overflow-text');
+  tankWrap.classList.remove('overflow');
+  gaugeFill.classList.remove('overflow-fill');
+  gaugeFill.style.transition = 'none';
+  gaugeFill.style.height = '0%';
+
+  document.getElementById('gaugeNum').textContent = evt.count + ' / ' + evt.target;
+
+  const pct = evt.count / evt.target;
+  const fillHeight = Math.min(pct, 1) * 100;
+  const overflow = pct > 1;
+
+  if(overflow){
+    gaugeSub.textContent = "Tank's full — they kept coming anyway. A night worth duplicating.";
+  } else if(pct >= 0.85){
+    gaugeSub.textContent = "Almost capped out — live count from the public page.";
+  } else {
+    gaugeSub.textContent = 'Live count from the public page — no refresh needed.';
+  }
+
+  const overlay = document.getElementById('gaugeModalOverlay');
+  overlay.classList.add('open');
+
+  // animate the fill in after the modal is visible, same as the guest-side reveal
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      gaugeFill.style.transition = 'height 1.4s cubic-bezier(.2,.8,.2,1)';
+      gaugeFill.style.height = fillHeight + '%';
+      if(overflow){
+        gaugeFill.classList.add('overflow-fill');
+        tankWrap.classList.add('overflow');
+        gaugeText.classList.add('overflow-text');
+      }
+      const gaugeWrap = document.getElementById('gaugeWrap');
+      gaugeWrap.classList.remove('pulse');
+      void gaugeWrap.offsetWidth;
+      gaugeWrap.classList.add('pulse');
+    });
+  });
+}
+// NOTE (pending, not yet implemented): user wants event-y/fun visual texture added back in —
+// graphics/imagery rather than color — without undoing the admin-professional structure just built.
+// See concept doc "Promoter dashboard" section for the captured brief. Do not act on this until told to proceed.
+function closeGaugeModal(){
+  document.getElementById('gaugeModalOverlay').classList.remove('open');
+}
+</script>
+</body>
+</html>
