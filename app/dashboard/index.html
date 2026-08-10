@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gassed — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#100d0c; --panel:#17131a; --card:#1b171c; --card-line:rgba(255,255,255,0.08);
+    --accent:#8b2fff; --accent-bright:#b565ff; --pink:#ff4fd8;
+    --text:#f2ede6; --muted:#8f8a90; --muted-dim:#655f68; --green:#4fe0a0; --danger:#e05f6c;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:'Inter',-apple-system,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; justify-content:center; }
+  .wrap{ width:100%; max-width:480px; padding-bottom:60px; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:18px 20px 15px; border-bottom:1px solid var(--card-line); }
+  .brand-lockup{ display:flex; align-items:center; gap:10px; }
+  .brand-mark{ width:30px;height:30px;border-radius:8px; background:var(--panel); border:1px solid var(--card-line); display:flex;align-items:center;justify-content:center; font-family:Anton,sans-serif; font-size:14px; color:var(--accent-bright); }
+  .brand-hi{ font-size:10.5px; color:var(--muted); line-height:1.3; }
+  .brand-hi b{ color:var(--text); font-size:13.5px; display:block; font-weight:700; }
+  .logout-btn{ font-size:11.5px; color:var(--muted); background:none; border:1px solid var(--card-line); border-radius:8px; padding:7px 11px; cursor:pointer; font-family:'Inter',sans-serif; }
+
+  .section{ margin:22px 20px 0; }
+  .section-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .section-label{ font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); font-weight:700; }
+  .new-event-btn{
+    background:linear-gradient(135deg, var(--accent), var(--pink));
+    border:none; color:#fff; font-weight:700; font-size:12.5px;
+    padding:9px 14px; border-radius:9px; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+
+  .empty-state{ text-align:center; padding:40px 20px; color:var(--muted); font-size:13.5px; line-height:1.6; }
+
+  .event-card{ background:var(--card); border:1px solid var(--card-line); border-radius:14px; padding:16px; margin-bottom:12px; }
+  .event-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:6px; }
+  .event-name{ font-size:17px; font-weight:800; }
+  .event-status{ font-size:9.5px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; padding:3px 8px; border-radius:6px; white-space:nowrap; }
+  .event-status.live{ color:var(--green); background:rgba(79,224,160,0.12); border:1px solid rgba(79,224,160,0.3); }
+  .event-status.draft{ color:var(--muted); background:rgba(255,255,255,0.05); border:1px solid var(--card-line); }
+  .event-meta{ font-size:12.5px; color:var(--muted); margin-bottom:12px; }
+  .event-link-row{ display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--card-line); border-radius:9px; padding:9px 10px; }
+  .event-link-text{ flex:1; font-size:11.5px; color:var(--accent-bright); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .copy-btn{ font-size:11px; font-weight:700; background:var(--card-line); border:none; color:var(--text); padding:6px 10px; border-radius:6px; cursor:pointer; font-family:'Inter',sans-serif; }
+
+  /* New event form (inline panel, not a separate page) */
+  .form-panel{ display:none; background:var(--card); border:1px solid var(--card-line); border-radius:14px; padding:18px; margin-top:4px; }
+  .form-panel.open{ display:block; }
+  .field{ margin-bottom:13px; }
+  .field label{ display:block; font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.3px; font-weight:700; }
+  .field input, .field textarea{
+    width:100%; background:var(--panel); border:1px solid var(--card-line); border-radius:9px;
+    color:var(--text); font-size:14px; padding:10px 12px; font-family:'Inter',sans-serif;
+  }
+  .field textarea{ resize:vertical; min-height:60px; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row .field{ flex:1; }
+  .lineup-item{ background:var(--panel); border:1px solid var(--card-line); border-radius:9px; padding:10px; margin-bottom:8px; }
+  .lineup-item .field-row{ margin-bottom:8px; }
+  .lineup-remove{ font-size:10.5px; color:var(--danger); background:none; border:none; cursor:pointer; padding:0; font-family:'Inter',sans-serif; }
+  .add-lineup-btn{ font-size:12px; color:var(--accent-bright); background:none; border:1px dashed var(--card-line); border-radius:9px; padding:9px; width:100%; cursor:pointer; font-family:'Inter',sans-serif; margin-bottom:16px; }
+  .save-btn{ width:100%; background:linear-gradient(135deg, var(--accent), var(--pink)); border:none; color:#fff; font-weight:800; font-size:14px; padding:13px; border-radius:11px; cursor:pointer; font-family:'Inter',sans-serif; }
+  .save-btn:disabled{ opacity:.5; }
+  .cancel-btn{ width:100%; background:none; border:none; color:var(--muted); font-size:12.5px; padding:10px; cursor:pointer; font-family:'Inter',sans-serif; }
+
+  .result-card{ display:none; background:rgba(79,224,160,0.08); border:1px solid rgba(79,224,160,0.3); border-radius:14px; padding:16px; margin-top:4px; }
+  .result-card.show{ display:block; }
+  .result-title{ font-size:14px; font-weight:800; color:var(--green); margin-bottom:8px; }
+  .result-link{ font-size:12.5px; color:var(--accent-bright); word-break:break-all; margin-bottom:10px; }
+
+  .error-msg{ display:none; background:rgba(255,95,168,0.1); border:1px solid rgba(255,95,168,0.3); color:#ff9eb0; font-size:12.5px; padding:10px 12px; border-radius:9px; margin-bottom:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand-lockup">
+      <div class="brand-mark">G</div>
+      <div class="brand-hi">Plug tools<b id="promoterHandle">…</b></div>
+    </div>
+    <button class="logout-btn" onclick="gassedLogout()">Log out</button>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-label">Your Events</div>
+      <button class="new-event-btn" onclick="toggleForm()">+ New Event</button>
+    </div>
+
+    <div class="form-panel" id="formPanel">
+      <div class="error-msg" id="formError"></div>
+      <div class="field">
+        <label>Venue name</label>
+        <input type="text" id="fVenue" placeholder="e.g. Ultraviolet">
+      </div>
+      <div class="field">
+        <label>Address</label>
+        <input type="text" id="fAddress" placeholder="1096 Queen St W, Toronto">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Date & time</label>
+          <input type="datetime-local" id="fDatetime">
+        </div>
+        <div class="field">
+          <label>Gauge target</label>
+          <input type="number" id="fTarget" value="60">
+        </div>
+      </div>
+      <div class="field">
+        <label>Entry info</label>
+        <input type="text" id="fEntry" placeholder="Free before 11PM · $20 after · 19+">
+      </div>
+      <div class="field">
+        <label>Tonight's hook (optional)</label>
+        <input type="text" id="fHook" placeholder="A one-line reason to show up">
+      </div>
+
+      <div class="field">
+        <label>The Lineup (optional)</label>
+        <div id="lineupList"></div>
+        <button class="add-lineup-btn" onclick="addLineupRow()">+ Add to the lineup</button>
+      </div>
+
+      <button class="save-btn" id="saveBtn" onclick="createEvent()">Save & get link</button>
+      <button class="cancel-btn" onclick="toggleForm()">Cancel</button>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-title">Event created</div>
+      <div class="result-link" id="resultLink"></div>
+      <button class="copy-btn" onclick="copyResultLink()">Copy link</button>
+    </div>
+
+    <div id="eventsList"></div>
+  </div>
+</div>
+
+<script src="/js/gassed-supabase.js"></script>
+<script>
+let currentPromoter = null;
+let lineupRowCount = 0;
+
+function addLineupRow(){
+  lineupRowCount++;
+  const id = 'lineup_' + lineupRowCount;
+  const div = document.createElement('div');
+  div.className = 'lineup-item';
+  div.id = id;
+  div.innerHTML = `
+    <div class="field-row">
+      <div class="field"><input type="text" placeholder="Name (e.g. VIP Table)" class="lu-name"></div>
+      <div class="field" style="max-width:90px;"><input type="text" placeholder="Price" class="lu-price"></div>
+    </div>
+    <div class="field" style="margin-bottom:6px;"><input type="text" placeholder="What's included" class="lu-desc"></div>
+    <button class="lineup-remove" onclick="document.getElementById('${id}').remove()">Remove</button>
+  `;
+  document.getElementById('lineupList').appendChild(div);
+}
+
+function toggleForm(){
+  const panel = document.getElementById('formPanel');
+  panel.classList.toggle('open');
+  document.getElementById('resultCard').classList.remove('show');
+}
+
+function showFormError(msg){
+  const el = document.getElementById('formError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideFormError(){
+  document.getElementById('formError').style.display = 'none';
+}
+
+async function createEvent(){
+  hideFormError();
+  const venue = document.getElementById('fVenue').value.trim();
+  const address = document.getElementById('fAddress').value.trim();
+  const datetime = document.getElementById('fDatetime').value;
+  const target = parseInt(document.getElementById('fTarget').value, 10) || 50;
+  const entry = document.getElementById('fEntry').value.trim();
+  const hook = document.getElementById('fHook').value.trim();
+
+  if(!venue || !datetime){
+    showFormError('Venue name and date/time are required.');
+    return;
+  }
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  const baseSlug = gassedSlugify(venue) + '-' + gassedSlugify(datetime.slice(0,10));
+  const slug = baseSlug + '-' + Math.random().toString(36).slice(2, 6);
+
+  const { data: eventRow, error: eventErr } = await gassedDb
+    .from('events')
+    .insert({
+      promoter_id: currentPromoter.id,
+      slug: slug,
+      venue_name: venue,
+      venue_address: address,
+      event_at: new Date(datetime).toISOString(),
+      entry_info: entry,
+      hype_hook: hook,
+      gauge_target: target,
+      status: 'live',
+      signup_mode: 'trial'
+    })
+    .select()
+    .single();
+
+  if(eventErr){
+    showFormError(eventErr.message);
+    btn.disabled = false;
+    btn.textContent = 'Save & get link';
+    return;
+  }
+
+  // Save any lineup rows that have a name filled in
+  const lineupRows = Array.from(document.querySelectorAll('.lineup-item')).map((row, i) => ({
+    event_id: eventRow.id,
+    name: row.querySelector('.lu-name').value.trim(),
+    price_label: row.querySelector('.lu-price').value.trim(),
+    description: row.querySelector('.lu-desc').value.trim(),
+    sort_order: i
+  })).filter(r => r.name);
+
+  if(lineupRows.length){
+    const { error: lineupErr } = await gassedDb.from('lineup_items').insert(lineupRows);
+    if(lineupErr) console.error('lineup insert error', lineupErr);
+  }
+
+  const link = window.location.origin + '/e/?event=' + slug;
+  document.getElementById('resultLink').textContent = link;
+  document.getElementById('resultCard').classList.add('show');
+  document.getElementById('resultCard').dataset.link = link;
+
+  toggleForm();
+  document.getElementById('resultCard').classList.add('show');
+  loadEvents();
+
+  btn.disabled = false;
+  btn.textContent = 'Save & get link';
+  document.getElementById('fVenue').value = '';
+  document.getElementById('fAddress').value = '';
+  document.getElementById('fDatetime').value = '';
+  document.getElementById('fEntry').value = '';
+  document.getElementById('fHook').value = '';
+  document.getElementById('lineupList').innerHTML = '';
+}
+
+function copyResultLink(){
+  const link = document.getElementById('resultCard').dataset.link;
+  navigator.clipboard.writeText(link).then(() => {
+    const btn = document.querySelector('#resultCard .copy-btn');
+    const original = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  });
+}
+
+async function loadEvents(){
+  const { data: events, error } = await gassedDb
+    .from('events')
+    .select('*')
+    .eq('promoter_id', currentPromoter.id)
+    .order('event_at', { ascending: false });
+
+  const list = document.getElementById('eventsList');
+  if(error){
+    list.innerHTML = `<div class="empty-state">Couldn't load your events: ${error.message}</div>`;
+    return;
+  }
+  if(!events.length){
+    list.innerHTML = `<div class="empty-state">No events yet — tap "+ New Event" to create your first one and get a real link to share.</div>`;
+    return;
+  }
+
+  list.innerHTML = events.map(ev => {
+    const link = window.location.origin + '/e/?event=' + ev.slug;
+    const dateStr = new Date(ev.event_at).toLocaleString('en-US', { weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+    return `
+      <div class="event-card">
+        <div class="event-top">
+          <div class="event-name">${escapeHtml(ev.venue_name)}</div>
+          <div class="event-status ${ev.status}">${ev.status}</div>
+        </div>
+        <div class="event-meta">${dateStr}</div>
+        <div class="event-link-row">
+          <div class="event-link-text">${link}</div>
+          <button class="copy-btn" onclick="copyText('${link}', this)">Copy</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function copyText(text, btn){
+  navigator.clipboard.writeText(text).then(() => {
+    const original = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = original; }, 1500);
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+(async function init(){
+  const { data: { session } } = await gassedDb.auth.getSession();
+  if(!session){
+    window.location.href = '/app/login/';
+    return;
+  }
+  currentPromoter = await gassedGetCurrentPromoter();
+  if(!currentPromoter){
+    console.error('No promoter row found for this user.');
+    return;
+  }
+  document.getElementById('promoterHandle').textContent = '@' + currentPromoter.handle;
+  loadEvents();
+})();
+</script>
+</body>
+</html>

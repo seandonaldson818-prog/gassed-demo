@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gassed — Plug Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#100d0c;
+    --panel:#17131a;
+    --card:#1b171c;
+    --card-line:rgba(255,255,255,0.08);
+    --violet:#7b3fe4;
+    --violet-bright:#a374ff;
+    --pink:#ff5fa8;
+    --text:#f5f1eb;
+    --muted:#a89f9a;
+    --muted-dim:#655f68;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(123,63,228,0.32) 0%, transparent 60%),
+      radial-gradient(100% 60% at 100% 110%, rgba(255,95,168,0.16) 0%, transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', -apple-system, sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .wrap{ width:100%; max-width:400px; }
+  .brand-mark{
+    width:44px;height:44px;border-radius:12px;
+    background:var(--panel);
+    border:1px solid var(--card-line);
+    display:flex;align-items:center;justify-content:center;
+    font-family:Anton, sans-serif;
+    font-size:20px;
+    color:var(--violet-bright);
+    margin:0 auto 18px;
+  }
+  .title{ font-family:Anton, sans-serif; font-size:32px; letter-spacing:.5px; text-align:center; margin-bottom:6px; }
+  .sub{ text-align:center; color:var(--muted); font-size:13.5px; line-height:1.5; margin-bottom:28px; }
+  .card{ background:var(--card); border:1px solid var(--card-line); border-radius:16px; padding:24px; }
+  .mode-toggle{ display:flex; gap:6px; background:var(--panel); border:1px solid var(--card-line); border-radius:10px; padding:4px; margin-bottom:20px; }
+  .mode-btn{ flex:1; text-align:center; padding:9px; border-radius:7px; font-size:13px; font-weight:700; color:var(--muted); cursor:pointer; background:none; border:none; font-family:'Inter',sans-serif; }
+  .mode-btn.active{ background:var(--violet); color:#fff; }
+  .field-label{ font-size:11px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; display:block; }
+  .field{ margin-bottom:14px; }
+  input[type="email"], input[type="password"], input[type="text"]{
+    width:100%;
+    background:var(--panel);
+    border:1px solid var(--card-line);
+    border-radius:10px;
+    color:var(--text);
+    font-size:15px;
+    padding:0 14px;
+    height:46px;
+    font-family:'Inter', sans-serif;
+  }
+  input::placeholder{ color:var(--muted-dim); }
+  input:focus{ outline:none; border-color:var(--violet-bright); }
+  .hint{ font-size:11px; color:var(--muted-dim); line-height:1.5; margin-bottom:18px; }
+  .go-btn{
+    width:100%;
+    background:linear-gradient(135deg, var(--violet), var(--violet-bright));
+    border:none; border-radius:12px; color:#fff;
+    font-family:'Inter', sans-serif; font-weight:700; font-size:14.5px;
+    padding:14px; cursor:pointer;
+  }
+  .go-btn:active{ transform:scale(0.98); }
+  .go-btn:disabled{ opacity:.5; cursor:default; }
+  .error-msg{
+    display:none;
+    background:rgba(255,95,168,0.1);
+    border:1px solid rgba(255,95,168,0.3);
+    color:#ff9eb0;
+    font-size:12.5px;
+    padding:10px 12px;
+    border-radius:9px;
+    margin-bottom:14px;
+    line-height:1.5;
+  }
+  .footer-note{ text-align:center; margin-top:24px; font-size:11.5px; color:var(--muted-dim); line-height:1.6; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand-mark">G</div>
+    <div class="title" id="pageTitle">PLUG LOGIN</div>
+    <div class="sub">Sign in to manage your events and see who's gassed up.</div>
+
+    <div class="card">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="modeSignIn" onclick="setMode('signin')">Sign in</button>
+        <button class="mode-btn" id="modeSignUp" onclick="setMode('signup')">Create account</button>
+      </div>
+
+      <div class="error-msg" id="errorMsg"></div>
+
+      <div class="field">
+        <label class="field-label">Email</label>
+        <input type="email" id="emailInput" placeholder="you@email.com">
+      </div>
+      <div class="field">
+        <label class="field-label">Password</label>
+        <input type="password" id="passwordInput" placeholder="••••••••">
+      </div>
+      <div class="hint" id="modeHint">New here? Switch to "Create account" above to set up your Plug profile.</div>
+      <button class="go-btn" id="submitBtn" onclick="submitForm()">Sign in</button>
+    </div>
+
+    <div class="footer-note">Real accounts, real login — this is the actual promoter side of Gassed, not a mock.</div>
+  </div>
+
+<script src="/js/gassed-supabase.js"></script>
+<script>
+let mode = 'signin';
+
+function setMode(m){
+  mode = m;
+  document.getElementById('modeSignIn').classList.toggle('active', m === 'signin');
+  document.getElementById('modeSignUp').classList.toggle('active', m === 'signup');
+  document.getElementById('pageTitle').textContent = m === 'signin' ? 'PLUG LOGIN' : 'CREATE YOUR PLUG';
+  document.getElementById('submitBtn').textContent = m === 'signin' ? 'Sign in' : 'Create account';
+  document.getElementById('modeHint').textContent = m === 'signin'
+    ? 'New here? Switch to "Create account" above to set up your Plug profile.'
+    : 'Already have an account? Switch back to "Sign in" above.';
+  hideError();
+}
+
+function showError(msg){
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideError(){
+  document.getElementById('errorMsg').style.display = 'none';
+}
+
+async function submitForm(){
+  hideError();
+  const email = document.getElementById('emailInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+  if(!email || !password){
+    showError('Enter both an email and password.');
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = mode === 'signin' ? 'Signing in…' : 'Creating account…';
+
+  let result;
+  if(mode === 'signin'){
+    result = await gassedDb.auth.signInWithPassword({ email, password });
+  } else {
+    result = await gassedDb.auth.signUp({ email, password });
+  }
+
+  if(result.error){
+    showError(result.error.message);
+    btn.disabled = false;
+    btn.textContent = mode === 'signin' ? 'Sign in' : 'Create account';
+    return;
+  }
+
+  if(mode === 'signup' && !result.data.session){
+    // Email confirmation is on for this project — tell them to check their inbox.
+    showError('Account created — check your email to confirm, then sign in.');
+    btn.disabled = false;
+    btn.textContent = 'Create account';
+    setMode('signin');
+    return;
+  }
+
+  window.location.href = '/app/dashboard/';
+}
+
+document.getElementById('passwordInput').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') submitForm();
+});
+
+// If already logged in, skip straight to the dashboard.
+gassedDb.auth.getSession().then(({ data: { session } }) => {
+  if(session) window.location.href = '/app/dashboard/';
+});
+</script>
+</body>
+</html>

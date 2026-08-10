@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gassed</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#0a0612; --card:#150c24; --violet:#8b2fff; --violet-bright:#b565ff; --pink:#ff4fd8;
+    --text:#f4eefe; --muted:#a89bc4;
+  }
+  /* amber theme swapped in via JS for theme === 'amber' */
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(circle at 50% 0%, #1c0f33 0%, var(--bg) 55%);
+    color:var(--text); min-height:100vh; display:flex; justify-content:center;
+  }
+  .phone{ width:100%; max-width:430px; min-height:100vh; padding-bottom:60px; }
+  .hero{ padding:46px 20px 30px; text-align:center; position:relative; }
+  .brand{ font-size:12px; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:14px; }
+  .brand span{ color:var(--violet-bright); font-weight:700; }
+  .club-name{ font-size:34px; font-weight:800; letter-spacing:1px; background:linear-gradient(90deg,var(--violet-bright),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent; margin:0 0 6px; }
+  .meta{ font-size:14px; color:var(--muted); line-height:1.6; }
+  .host-row{ margin-top:14px; display:inline-flex; align-items:center; gap:8px; background:rgba(139,47,255,0.12); border:1px solid rgba(139,47,255,0.35); padding:6px 14px; border-radius:999px; font-size:13px; }
+  .host-dot{ width:8px;height:8px;border-radius:50%; background:var(--violet-bright); }
+
+  .section{ margin:22px 20px 0; }
+  .section-label{ font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+  .entry-card{ background:var(--card); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:14px 16px; font-size:14px; }
+  .entry-card b{ color:var(--violet-bright); }
+  .hype-banner{ margin-top:10px; padding:12px 14px; border-radius:14px; background:linear-gradient(120deg, rgba(139,47,255,0.16), rgba(255,79,216,0.12)); border:1px solid rgba(255,79,216,0.35); font-size:13.5px; font-weight:600; }
+
+  .gauge-wrap{ background:var(--card); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:14px 16px; }
+  .gauge-top{ display:flex; justify-content:space-between; font-size:13px; margin-bottom:10px; color:var(--muted); }
+  .gauge-top b{ color:var(--text); }
+  .tank-wrap{ position:relative; height:40px; border-radius:10px; background:linear-gradient(180deg,#180f2a,#0c0716); border:1px solid rgba(255,255,255,0.09); overflow:hidden; }
+  .tank-fill{ position:absolute; left:0; top:0; bottom:0; width:0%; background:linear-gradient(90deg, var(--violet), var(--pink)); transition:width 1.4s cubic-bezier(.2,.8,.2,1); }
+
+  .lineup-item{ background:var(--card); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px; margin-bottom:10px; }
+  .li-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .li-name{ font-weight:700; font-size:15px; }
+  .li-price{ font-weight:800; color:var(--violet-bright); font-size:16px; }
+  .li-desc{ font-size:13px; color:var(--muted); line-height:1.5; }
+
+  .form-card{ background:var(--card); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:18px 16px; }
+  .field{ margin-bottom:12px; }
+  .field label{ display:block; font-size:12px; color:var(--muted); margin-bottom:6px; }
+  .field input{ width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:#0f0919; color:var(--text); font-size:15px; }
+  .field input:focus{ outline:none; border-color:var(--violet-bright); }
+  .submit-btn{ width:100%; padding:14px; border:none; border-radius:12px; font-size:15px; font-weight:800; color:#fff; background:linear-gradient(90deg,var(--violet),var(--pink)); cursor:pointer; }
+  .submit-btn:disabled{ opacity:.5; }
+
+  .confirm{ display:none; text-align:center; padding:28px 16px; }
+  .confirm.show{ display:block; }
+  .check-circle{ width:56px;height:56px; margin:0 auto; border-radius:50%; background:linear-gradient(135deg,var(--violet),var(--pink)); display:flex;align-items:center;justify-content:center; font-size:26px; }
+  .confirm h3{ margin:14px 0 6px; font-size:20px; }
+  .confirm p{ color:var(--muted); font-size:13.5px; margin:0; }
+
+  .footer-note{ text-align:center; font-size:11px; color:#5f5478; margin-top:26px; padding:0 30px; line-height:1.6; }
+  .loading, .not-found{ text-align:center; padding:80px 30px; color:var(--muted); font-size:14px; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="phone" id="pageRoot">
+  <div class="loading" id="loadingState">Loading event…</div>
+</div>
+
+<script src="/js/gassed-supabase.js"></script>
+<script>
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+async function loadEvent(){
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('event');
+  const root = document.getElementById('pageRoot');
+
+  if(!slug){
+    root.innerHTML = '<div class="not-found">No event specified.</div>';
+    return;
+  }
+
+  const { data: event, error } = await gassedDb
+    .from('events')
+    .select('*, promoters(handle, display_name, tagline)')
+    .eq('slug', slug)
+    .eq('status', 'live')
+    .single();
+
+  if(error || !event){
+    root.innerHTML = '<div class="not-found">This event doesn\'t exist or isn\'t live yet.</div>';
+    return;
+  }
+
+  const { data: lineupItems } = await gassedDb
+    .from('lineup_items')
+    .select('*')
+    .eq('event_id', event.id)
+    .order('sort_order', { ascending: true });
+
+  const { count: signupCount } = await gassedDb
+    .from('signups')
+    .select('*', { count: 'exact', head: true })
+    .eq('event_id', event.id);
+
+  renderPage(event, lineupItems || [], signupCount || 0);
+}
+
+function renderPage(event, lineupItems, signupCount){
+  const root = document.getElementById('pageRoot');
+  const promoterHandle = event.promoters ? event.promoters.handle : 'plug';
+  const dateStr = new Date(event.event_at).toLocaleString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  const timeStr = new Date(event.event_at).toLocaleString('en-US', { hour:'numeric', minute:'2-digit' });
+  const pct = Math.min(signupCount / (event.gauge_target || 1), 1) * 100;
+
+  const lineupHtml = lineupItems.length ? `
+    <div class="section">
+      <div class="section-label">The Lineup</div>
+      ${lineupItems.map(li => `
+        <div class="lineup-item">
+          <div class="li-top"><span class="li-name">${escapeHtml(li.name)}</span><span class="li-price">${escapeHtml(li.price_label)}</span></div>
+          <div class="li-desc">${escapeHtml(li.description)}</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  const hypeHtml = event.hype_hook ? `<div class="hype-banner">${escapeHtml(event.hype_hook)}</div>` : '';
+
+  root.innerHTML = `
+    <div class="hero">
+      <div class="brand">powered by <span>gassed</span></div>
+      <div class="club-name">${escapeHtml(event.venue_name).toUpperCase()}</div>
+      <div class="meta">${escapeHtml(event.venue_address)}${event.venue_address ? ' · ' : ''}${dateStr}<br>Doors ${timeStr}</div>
+      <div class="host-row"><span class="host-dot"></span> Plugged by @${escapeHtml(promoterHandle)}</div>
+    </div>
+
+    <div class="section">
+      <div class="entry-card"><b>${escapeHtml(event.entry_info || 'Details coming soon')}</b></div>
+      ${hypeHtml}
+    </div>
+
+    <div class="section">
+      <div class="gauge-wrap">
+        <div class="gauge-top"><span>Spots filling up</span><b>${signupCount} / ${event.gauge_target} gassed up</b></div>
+        <div class="tank-wrap"><div class="tank-fill" id="gaugeFill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    ${lineupHtml}
+
+    <div class="section">
+      <div class="section-label">You in?</div>
+      <div class="form-card" id="formCard">
+        <div class="field">
+          <label>Your name</label>
+          <input type="text" id="nameInput" placeholder="First & last name">
+        </div>
+        <button class="submit-btn" id="submitBtn">I'm gassed — I'm coming</button>
+      </div>
+      <div class="confirm" id="confirmCard">
+        <div class="check-circle">✓</div>
+        <h3>You're gassed up</h3>
+        <p>You're on the list for ${escapeHtml(event.venue_name)}, ${dateStr}.<br>See you at the door.</p>
+      </div>
+    </div>
+
+    <div class="footer-note">Powered by Gassed — a link-in-bio built for throwing a night out.</div>
+  `;
+
+  requestAnimationFrame(() => {
+    document.getElementById('gaugeFill').style.width = pct + '%';
+  });
+
+  document.getElementById('submitBtn').addEventListener('click', async () => {
+    const name = document.getElementById('nameInput').value.trim();
+    if(!name){
+      document.getElementById('nameInput').focus();
+      return;
+    }
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Signing up…';
+
+    const { error } = await gassedDb.from('signups').insert({ event_id: event.id, name });
+    if(error){
+      alert("Couldn't sign up: " + error.message);
+      btn.disabled = false;
+      btn.textContent = "I'm gassed — I'm coming";
+      return;
+    }
+
+    document.getElementById('formCard').style.display = 'none';
+    document.getElementById('confirmCard').classList.add('show');
+  });
+}
+
+loadEvent();
+</script>
+</body>
+</html>
