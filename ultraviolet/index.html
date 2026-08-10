@@ -1435,6 +1435,76 @@
     .floating-gassed-btn .fg-gassed{font-size:14px;}
     .floating-gassed-btn .fg-im{font-size:9px;}
   }
+
+  /* ---------- hype feed (comments) ---------- */
+  .hype-wrap{
+    background:var(--card);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:14px;
+    padding:14px 14px 12px;
+  }
+  .hype-feed{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    max-height:220px;
+    overflow-y:auto;
+    margin-bottom:12px;
+    padding-right:2px;
+  }
+  .hype-feed::-webkit-scrollbar{width:4px;}
+  .hype-feed::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12); border-radius:2px;}
+  .hype-msg{
+    display:flex;
+    gap:8px;
+    align-items:flex-start;
+  }
+  .hype-msg-avatar{
+    flex-shrink:0;
+    width:26px; height:26px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--violet), var(--pink));
+    display:flex; align-items:center; justify-content:center;
+    font-size:10.5px; font-weight:800; color:#fff;
+  }
+  .hype-msg-body{ min-width:0; }
+  .hype-msg-row{ display:flex; align-items:baseline; gap:6px; }
+  .hype-msg-name{ font-size:12.5px; font-weight:800; color:var(--text); }
+  .hype-msg-time{ font-size:10px; color:var(--muted); }
+  .hype-msg-text{ font-size:13px; color:var(--text); opacity:.9; line-height:1.4; margin-top:1px; word-break:break-word; }
+  .hype-composer{
+    display:flex;
+    gap:8px;
+    border-top:1px solid rgba(255,255,255,0.06);
+    padding-top:12px;
+  }
+  .hype-composer input{
+    flex:1;
+    min-width:0;
+    background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:999px;
+    padding:10px 14px;
+    font-size:13px;
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    outline:none;
+  }
+  .hype-composer input::placeholder{ color:var(--muted); }
+  .hype-composer input:focus{ border-color:var(--violet-bright); }
+  .hype-composer button{
+    flex-shrink:0;
+    width:38px; height:38px;
+    border-radius:50%;
+    border:none;
+    background:linear-gradient(135deg, var(--violet), var(--violet-bright));
+    color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    padding:0;
+  }
+  .hype-composer button svg{ width:16px; height:16px; }
+  .hype-composer button:active{ transform:scale(0.94); }
 </style>
 </head>
 <body>
@@ -1597,6 +1667,19 @@
         <div class="tank-burst" id="tankBurst"><span></span><span></span><span></span><span></span><span></span></div>
         <div class="tank-ticks"><span></span><span></span><span></span><span></span><span></span></div>
         <div class="tank-labels"><span>F</span><span>E</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">What people are saying</div>
+    <div class="hype-wrap">
+      <div class="hype-feed" id="hypeFeed"></div>
+      <div class="hype-composer">
+        <input type="text" id="hypeInput" placeholder="Say something about tonight..." maxlength="140">
+        <button id="hypeSendBtn" type="button" aria-label="Post comment">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
       </div>
     </div>
   </div>
@@ -2144,6 +2227,70 @@ function toggleTilePreview(tile){
     pauseTilePreview(tile);
   }
 }
+
+/* ===== Hype feed — comments near the gauge. Demo only: seeded messages plus
+   whatever the visitor types, kept in localStorage so it survives a refresh
+   on this device. Not synced anywhere — this event page isn't wired to a
+   backend yet. ===== */
+(function(){
+  const STORAGE_KEY = 'gassed_ultraviolet_comments';
+  const seedComments = [
+    {name:'@keisha', text:'pulling up with the girls tonight, save us a spot on the list 🔥', time:'2h ago'},
+    {name:'@marcus.t', text:'last time was actually insane, cant wait for this one', time:'1h ago'},
+    {name:'@priya', text:'is there a dress code or nah', time:'40m ago'},
+    {name:'@dre', text:'tank almost full already lol pull up early', time:'12m ago'}
+  ];
+  const feed = document.getElementById('hypeFeed');
+  const input = document.getElementById('hypeInput');
+  const sendBtn = document.getElementById('hypeSendBtn');
+  if(!feed || !input || !sendBtn) return;
+
+  function initials(name){
+    const clean = name.replace('@','');
+    return clean.slice(0,2).toUpperCase();
+  }
+
+  function renderMsg(msg){
+    const el = document.createElement('div');
+    el.className = 'hype-msg';
+    el.innerHTML =
+      '<div class="hype-msg-avatar">' + initials(msg.name) + '</div>' +
+      '<div class="hype-msg-body">' +
+        '<div class="hype-msg-row">' +
+          '<div class="hype-msg-name"></div>' +
+          '<div class="hype-msg-time"></div>' +
+        '</div>' +
+        '<div class="hype-msg-text"></div>' +
+      '</div>';
+    el.querySelector('.hype-msg-name').textContent = msg.name;
+    el.querySelector('.hype-msg-time').textContent = msg.time;
+    el.querySelector('.hype-msg-text').textContent = msg.text;
+    feed.appendChild(el);
+  }
+
+  let stored = [];
+  try { stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e){ stored = []; }
+
+  seedComments.forEach(renderMsg);
+  stored.forEach(renderMsg);
+  feed.scrollTop = feed.scrollHeight;
+
+  function postComment(){
+    const text = input.value.trim();
+    if(!text) return;
+    const msg = {name:'@you', text: text.slice(0,140), time:'just now'};
+    renderMsg(msg);
+    stored.push(msg);
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(stored)); } catch(e){}
+    input.value = '';
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  sendBtn.addEventListener('click', postComment);
+  input.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){ postComment(); }
+  });
+})();
 </script>
 </body>
 </html>
