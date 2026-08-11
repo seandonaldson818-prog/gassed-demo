@@ -218,11 +218,30 @@ function scrollToGassedSignup(){
 }
 function hideFloatingGassedBtn(){
   const b = document.getElementById('floatingGassedBtn');
-  if(b) b.style.display = 'none';
+  if(b){ b.style.display = 'none'; b.dataset.signedUp = '1'; }
 }
 function showFloatingGassedBtn(){
   const b = document.getElementById('floatingGassedBtn');
   if(b) b.style.display = 'flex';
+  watchFormCardVisibility();
+}
+// On short pages (or once scrolled down), the sign-up form is already on
+// screen — showing the floating shortcut on top of it just blocks the
+// "Your name" field instead of helping. Hide the button whenever the form
+// card itself is visible, and bring it back once the guest scrolls away
+// from it. Skipped entirely once the guest has actually signed up (see
+// hideFloatingGassedBtn's dataset.signedUp flag), since the button should
+// stay hidden for good at that point.
+function watchFormCardVisibility(){
+  const formCard = document.getElementById('formCard');
+  const btn = document.getElementById('floatingGassedBtn');
+  if(!formCard || !btn || !('IntersectionObserver' in window)) return;
+  const observer = new IntersectionObserver((entries)=>{
+    if(btn.dataset.signedUp === '1') { observer.disconnect(); return; }
+    const entry = entries[0];
+    btn.style.display = entry.isIntersecting ? 'none' : 'flex';
+  }, { threshold: 0.2 });
+  observer.observe(formCard);
 }
 
 function renderPage(event, lineupItems, signupCount){
