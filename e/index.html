@@ -9,14 +9,28 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --bg:#0a0612; --card:#150c24; --violet:#8b2fff; --violet-bright:#b565ff; --pink:#ff4fd8;
+    --bg:#0a0612; --bg-glow:#1c0f33; --card:#150c24; --violet:#8b2fff; --violet-bright:#b565ff; --pink:#ff4fd8;
     --text:#f4eefe; --muted:#a89bc4; --display-font:'Bebas Neue', -apple-system, sans-serif;
   }
-  /* amber theme swapped in via JS for theme === 'amber' */
+  /* Event page themes — event.theme picks one of these via a data-theme attribute
+     on <html>, set in loadEvent()/applyTheme() below. Default (no attribute, or an
+     unrecognized value) is the violet palette defined in :root above. */
+  html[data-theme="amber"]{
+    --bg:#170f0a; --bg-glow:#2c1c0c; --card:#231a0f; --violet:#b8823a; --violet-bright:#f5c86b; --pink:#ff9eb0;
+    --text:#fff8ef; --muted:#cdb69a;
+  }
+  html[data-theme="neon"]{
+    --bg:#04120f; --bg-glow:#062824; --card:#0d211c; --violet:#00b894; --violet-bright:#39ffc7; --pink:#7cf9ff;
+    --text:#eafff8; --muted:#7fd9c4;
+  }
+  html[data-theme="redroom"]{
+    --bg:#150505; --bg-glow:#2c0a0a; --card:#241010; --violet:#c81e3a; --violet-bright:#ff3355; --pink:#ff6b6b;
+    --text:#fff0f0; --muted:#c99797;
+  }
   *{box-sizing:border-box;}
   body{
     margin:0; font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:radial-gradient(circle at 50% 0%, #1c0f33 0%, var(--bg) 55%);
+    background:radial-gradient(circle at 50% 0%, var(--bg-glow) 0%, var(--bg) 55%);
     color:var(--text); min-height:100vh; display:flex; justify-content:center;
   }
   .phone{ width:100%; max-width:430px; min-height:100vh; padding-bottom:60px; }
@@ -100,6 +114,18 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
+// Known theme keys — anything else (including missing/null, e.g. if the
+// `theme` column doesn't exist yet on this Supabase project) falls back to
+// the default violet look defined in :root, no error thrown either way.
+const GASSED_KNOWN_THEMES = ['violet', 'amber', 'neon', 'redroom'];
+function applyTheme(theme){
+  if(theme && GASSED_KNOWN_THEMES.includes(theme) && theme !== 'violet'){
+    document.documentElement.setAttribute('data-theme', theme);
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+}
+
 async function loadEvent(){
   const params = new URLSearchParams(window.location.search);
   const slug = params.get('event');
@@ -148,6 +174,7 @@ async function loadEvent(){
     .select('*', { count: 'exact', head: true })
     .eq('event_id', event.id);
 
+  applyTheme(event.theme);
   renderPage(event, lineupItems || [], signupCount || 0);
 }
 
