@@ -9,22 +9,24 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --bg:#0a0612; --bg-glow:#1c0f33; --card:#150c24; --violet:#8b2fff; --violet-bright:#b565ff; --pink:#ff4fd8;
+    --bg:#0a0612; --bg-glow:#1c0f33; --card:#150c24; --violet:#8b2fff; --violet-rgb:139,47,255; --violet-bright:#b565ff; --pink:#ff4fd8; --pink-rgb:255,79,216;
     --text:#f4eefe; --muted:#a89bc4; --display-font:'Bebas Neue', -apple-system, sans-serif;
   }
   /* Event page themes — event.theme picks one of these via a data-theme attribute
      on <html>, set in loadEvent()/applyTheme() below. Default (no attribute, or an
-     unrecognized value) is the violet palette defined in :root above. */
+     unrecognized value) is the violet palette defined in :root above. --violet-rgb
+     is the same color as --violet, in "r,g,b" form so rgba() tints (like .host-row's
+     background/border) can follow the theme too instead of staying hardcoded violet. */
   html[data-theme="amber"]{
-    --bg:#170f0a; --bg-glow:#2c1c0c; --card:#231a0f; --violet:#b8823a; --violet-bright:#f5c86b; --pink:#ff9eb0;
+    --bg:#170f0a; --bg-glow:#2c1c0c; --card:#231a0f; --violet:#b8823a; --violet-rgb:184,130,58; --violet-bright:#f5c86b; --pink:#ff9eb0; --pink-rgb:255,158,176;
     --text:#fff8ef; --muted:#cdb69a;
   }
   html[data-theme="neon"]{
-    --bg:#04120f; --bg-glow:#062824; --card:#0d211c; --violet:#00b894; --violet-bright:#39ffc7; --pink:#7cf9ff;
+    --bg:#04120f; --bg-glow:#062824; --card:#0d211c; --violet:#00b894; --violet-rgb:0,184,148; --violet-bright:#39ffc7; --pink:#7cf9ff; --pink-rgb:124,249,255;
     --text:#eafff8; --muted:#7fd9c4;
   }
   html[data-theme="redroom"]{
-    --bg:#150505; --bg-glow:#2c0a0a; --card:#241010; --violet:#c81e3a; --violet-bright:#ff3355; --pink:#ff6b6b;
+    --bg:#150505; --bg-glow:#2c0a0a; --card:#241010; --violet:#c81e3a; --violet-rgb:200,30,58; --violet-bright:#ff3355; --pink:#ff6b6b; --pink-rgb:255,107,107;
     --text:#fff0f0; --muted:#c99797;
   }
   *{box-sizing:border-box;}
@@ -39,14 +41,14 @@
   .brand span{ color:var(--violet-bright); font-weight:700; }
   .club-name{ font-family:var(--display-font); font-size:40px; font-weight:400; letter-spacing:1px; background:linear-gradient(90deg,var(--violet-bright),var(--pink)); -webkit-background-clip:text; background-clip:text; color:transparent; margin:0 0 8px; line-height:1.05; }
   .meta{ font-size:14px; color:var(--muted); line-height:1.7; }
-  .host-row{ margin-top:16px; display:inline-flex; align-items:center; gap:8px; background:rgba(139,47,255,0.12); border:1px solid rgba(139,47,255,0.35); padding:6px 14px; border-radius:999px; font-size:13px; }
+  .host-row{ margin-top:16px; display:inline-flex; align-items:center; gap:8px; background:rgba(var(--violet-rgb),0.12); border:1px solid rgba(var(--violet-rgb),0.35); padding:6px 14px; border-radius:999px; font-size:13px; }
   .host-dot{ width:8px;height:8px;border-radius:50%; background:var(--violet-bright); box-shadow:0 0 10px var(--violet-bright); }
 
   .section{ margin:24px 20px 0; }
   .section-label{ font-family:var(--display-font); font-size:16px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
   .entry-card{ background:var(--card); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:14px 16px; font-size:14px; box-shadow:0 8px 24px rgba(0,0,0,0.18); }
   .entry-card b{ color:var(--violet-bright); }
-  .hype-banner{ margin-top:10px; padding:12px 14px; border-radius:14px; background:linear-gradient(120deg, rgba(139,47,255,0.16), rgba(255,79,216,0.12)); border:1px solid rgba(255,79,216,0.35); font-size:13.5px; font-weight:600; }
+  .hype-banner{ margin-top:10px; padding:12px 14px; border-radius:14px; background:linear-gradient(120deg, rgba(var(--violet-rgb),0.16), rgba(var(--pink-rgb),0.12)); border:1px solid rgba(var(--pink-rgb),0.35); font-size:13.5px; font-weight:600; }
 
   /* Host identity — the plug's name/branding/photo shown to guests */
   .host-spot-card{
@@ -55,14 +57,14 @@
   }
   .host-spot-card::before{
     content:""; position:absolute; top:-40px; left:-30px; width:150px; height:150px; border-radius:50%;
-    background:radial-gradient(circle, rgba(139,47,255,0.28), transparent 70%); filter:blur(2px); pointer-events:none;
+    background:radial-gradient(circle, rgba(var(--violet-rgb),0.28), transparent 70%); filter:blur(2px); pointer-events:none;
   }
   .host-spot-top{ position:relative; z-index:1; display:flex; align-items:center; gap:13px; }
   .host-spot-avatar{
     position:relative; flex-shrink:0; width:56px; height:56px; border-radius:50%;
     background:linear-gradient(135deg, var(--violet-bright), var(--pink));
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 0 18px rgba(255,79,216,0.4); border:2px solid rgba(255,255,255,0.2);
+    box-shadow:0 0 18px rgba(var(--pink-rgb),0.4); border:2px solid rgba(255,255,255,0.2);
     font-family:var(--display-font); font-size:22px; color:#fff; overflow:hidden;
   }
   .host-spot-avatar img{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
