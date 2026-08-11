@@ -102,6 +102,21 @@
   .result-link{ font-size:12.5px; color:var(--accent-bright); word-break:break-all; margin-bottom:10px; }
 
   .error-msg{ display:none; background:rgba(255,95,168,0.1); border:1px solid rgba(255,95,168,0.3); color:#ff9eb0; font-size:12.5px; padding:10px 12px; border-radius:9px; margin-bottom:14px; }
+
+  /* Page theme picker — palette swatches for the guest event page */
+  .theme-swatches{ display:flex; gap:10px; }
+  .theme-swatch{
+    position:relative; flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
+    background:var(--panel); border:1.5px solid var(--card-line); border-radius:11px; padding:10px 6px 8px;
+    cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .theme-swatch.active{ border-color:var(--accent-bright); box-shadow:0 0 0 1px var(--accent-bright), 0 0 14px rgba(181,101,255,0.35); }
+  .theme-swatch-dot{ width:26px; height:26px; border-radius:50%; box-shadow:inset 0 0 0 2px rgba(255,255,255,0.15); }
+  .theme-swatch-name{ font-size:10.5px; color:var(--text); font-weight:700; }
+  .theme-swatch-pro{
+    position:absolute; top:5px; right:5px; font-size:8px; font-weight:800; letter-spacing:.3px;
+    color:#100d0c; background:var(--accent-bright); border-radius:5px; padding:2px 4px; line-height:1;
+  }
 </style>
 </head>
 <body>
@@ -186,6 +201,11 @@
         <button class="add-lineup-btn" onclick="addLineupRow()">+ Add to the lineup</button>
       </div>
 
+      <div class="field">
+        <label>Page theme</label>
+        <div class="theme-swatches" id="themeSwatches"></div>
+      </div>
+
       <button class="save-btn" id="saveBtn" onclick="handleCreateEvent()">Save & get link</button>
       <button class="cancel-btn" onclick="toggleForm()">Cancel</button>
     </div>
@@ -204,6 +224,34 @@
 <script>
 let currentPromoter = null;
 let lineupRowCount = 0;
+
+// Page theme picker — palette swatches for the guest event page (`e/index.html`).
+// `free` palettes are directly selectable; `pro` ones are shown with a badge but
+// still fully selectable for now (no real paywall in this pass — see concept doc
+// "Monetization"). Colors mirror the palette definitions in e/index.html's CSS.
+const GASSED_THEMES = [
+  { key: 'violet',  name: 'Violet',    dot: 'linear-gradient(135deg,#8b2fff,#ff4fd8)', tier: 'free' },
+  { key: 'amber',   name: 'Amber',     dot: 'linear-gradient(135deg,#b8823a,#f5c86b)', tier: 'free' },
+  { key: 'neon',    name: 'Neon',      dot: 'linear-gradient(135deg,#00b894,#7cf9ff)', tier: 'pro' },
+  { key: 'redroom', name: 'Red Room',  dot: 'linear-gradient(135deg,#c81e3a,#ff3355)', tier: 'pro' },
+];
+let selectedTheme = 'violet';
+
+function renderThemeSwatches(){
+  const wrap = document.getElementById('themeSwatches');
+  wrap.innerHTML = GASSED_THEMES.map(t => `
+    <div class="theme-swatch ${t.key === selectedTheme ? 'active' : ''}" onclick="selectTheme('${t.key}')">
+      ${t.tier === 'pro' ? '<div class="theme-swatch-pro">PRO</div>' : ''}
+      <div class="theme-swatch-dot" style="background:${t.dot}"></div>
+      <div class="theme-swatch-name">${t.name}</div>
+    </div>
+  `).join('');
+}
+
+function selectTheme(key){
+  selectedTheme = key;
+  renderThemeSwatches();
+}
 
 function addLineupRow(){
   lineupRowCount++;
@@ -258,22 +306,38 @@ async function handleCreateEvent(){
   const baseSlug = gassedSlugify(venue) + '-' + gassedSlugify(datetime.slice(0,10));
   const slug = baseSlug + '-' + Math.random().toString(36).slice(2, 6);
 
-  const { data: eventRow, error: eventErr } = await gassedDb
+  const baseEventFields = {
+    promoter_id: currentPromoter.id,
+    slug: slug,
+    venue_name: venue,
+    venue_address: address,
+    event_at: new Date(datetime).toISOString(),
+    entry_info: entry,
+    hype_hook: hook,
+    gauge_target: target,
+    status: 'live',
+    signup_mode: 'trial'
+  };
+
+  // `theme` may not exist as a column yet on every Supabase project this runs
+  // against — try the insert with it first, and fall back to the known-good
+  // columns rather than failing the whole event creation if it's missing.
+  // Same defensive pattern as avatar_url in handleSaveProfile().
+  let { data: eventRow, error: eventErr } = await gassedDb
     .from('events')
-    .insert({
-      promoter_id: currentPromoter.id,
-      slug: slug,
-      venue_name: venue,
-      venue_address: address,
-      event_at: new Date(datetime).toISOString(),
-      entry_info: entry,
-      hype_hook: hook,
-      gauge_target: target,
-      status: 'live',
-      signup_mode: 'trial'
-    })
+    .insert({ ...baseEventFields, theme: selectedTheme })
     .select()
     .single();
+
+  if(eventErr){
+    const fallback = await gassedDb
+      .from('events')
+      .insert(baseEventFields)
+      .select()
+      .single();
+    eventRow = fallback.data;
+    eventErr = fallback.error;
+  }
 
   if(eventErr){
     showFormError(eventErr.message);
@@ -313,6 +377,8 @@ async function handleCreateEvent(){
   document.getElementById('fEntry').value = '';
   document.getElementById('fHook').value = '';
   document.getElementById('lineupList').innerHTML = '';
+  selectedTheme = 'violet';
+  renderThemeSwatches();
 }
 
 function copyResultLink(){
@@ -452,6 +518,7 @@ function escapeHtml(str){
   ['fDisplayName','fTagline','fAvatarUrl'].forEach(id => {
     document.getElementById(id).addEventListener('input', updateProfilePreview);
   });
+  renderThemeSwatches();
   loadEvents();
 })();
 </script>
