@@ -93,6 +93,35 @@
   .submit-btn{ width:100%; padding:14px; border:none; border-radius:12px; font-size:15px; font-weight:800; color:#fff; background:linear-gradient(90deg,var(--violet),var(--pink)); cursor:pointer; }
   .submit-btn:disabled{ opacity:.5; }
 
+  /* Floating "I'M GASSED" sign-up shortcut — fixed to the bottom-center of the
+     viewport so it stays reachable through any amount of scrolling. Tapping it
+     smooth-scrolls down to the sign-up card. Same violet-bright -> pink gradient
+     as .submit-btn above (and follows the active theme's CSS custom properties
+     automatically), since it's just a shortcut into that same form. Hidden once
+     the guest has actually signed up — see hideFloatingGassedBtn(). */
+  .floating-gassed-btn{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%); z-index:900;
+    width:104px; height:104px; border-radius:50%; border:none; cursor:pointer;
+    background:linear-gradient(135deg, var(--violet-bright), var(--pink));
+    color:#170318; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:4px;
+    box-shadow:0 8px 26px rgba(0,0,0,0.5);
+    transition:transform .15s ease, opacity .2s ease;
+  }
+  .floating-gassed-btn:active{ transform:translateX(-50%) scale(0.92); }
+  .floating-gassed-btn .fg-im{
+    font-family:'Inter',-apple-system,sans-serif; font-size:10px; font-weight:700;
+    letter-spacing:0.12em; text-transform:uppercase; opacity:0.82; margin-bottom:-1px;
+  }
+  .floating-gassed-btn .fg-gassed{
+    font-family:'Inter',-apple-system,sans-serif; font-size:17px; font-weight:900; text-transform:uppercase;
+  }
+  @media (max-width:380px){
+    .floating-gassed-btn{ width:92px; height:92px; }
+    .floating-gassed-btn .fg-gassed{ font-size:14px; }
+    .floating-gassed-btn .fg-im{ font-size:9px; }
+  }
+
   .confirm{ display:none; text-align:center; padding:28px 16px; }
   .confirm.show{ display:block; }
   .check-circle{ width:56px;height:56px; margin:0 auto; border-radius:50%; background:linear-gradient(135deg,var(--violet),var(--pink)); display:flex;align-items:center;justify-content:center; font-size:26px; }
@@ -107,6 +136,8 @@
 <div class="phone" id="pageRoot">
   <div class="loading" id="loadingState">Loading event…</div>
 </div>
+
+<button class="floating-gassed-btn" id="floatingGassedBtn" onclick="scrollToGassedSignup()" aria-label="I'm gassed — jump to sign up" style="display:none;"><span class="fg-im">I'M</span><span class="fg-gassed">GASSED</span></button>
 
 <script src="/js/gassed-supabase.js"></script>
 <script>
@@ -180,6 +211,20 @@ async function loadEvent(){
   renderPage(event, lineupItems || [], signupCount || 0);
 }
 
+// ---- Floating "I'M GASSED" sign-up shortcut ----
+function scrollToGassedSignup(){
+  const el = document.getElementById('formCard');
+  if(el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function hideFloatingGassedBtn(){
+  const b = document.getElementById('floatingGassedBtn');
+  if(b) b.style.display = 'none';
+}
+function showFloatingGassedBtn(){
+  const b = document.getElementById('floatingGassedBtn');
+  if(b) b.style.display = 'flex';
+}
+
 function renderPage(event, lineupItems, signupCount){
   const root = document.getElementById('pageRoot');
   const promoter = event.promoters || {};
@@ -209,6 +254,22 @@ function renderPage(event, lineupItems, signupCount){
   ` : '';
 
   const hypeHtml = event.hype_hook ? `<div class="hype-banner">${escapeHtml(event.hype_hook)}</div>` : '';
+
+  // Sign-up mode — 'full' asks for phone (required) + Instagram (optional) in
+  // addition to name; anything else (including missing/null, e.g. if the
+  // `signup_mode` column doesn't exist yet on this Supabase project) falls
+  // back to today's name-only behavior, no error thrown either way.
+  const signupMode = event.signup_mode === 'full' ? 'full' : 'trial';
+  const extraFieldsHtml = signupMode === 'full' ? `
+        <div class="field">
+          <label>Phone number</label>
+          <input type="tel" id="phoneInput" placeholder="For the door list">
+        </div>
+        <div class="field">
+          <label>Instagram (optional)</label>
+          <input type="text" id="igInput" placeholder="@yourhandle">
+        </div>
+  ` : '';
 
   root.innerHTML = `
     <div class="hero">
@@ -252,6 +313,7 @@ function renderPage(event, lineupItems, signupCount){
           <label>Your name</label>
           <input type="text" id="nameInput" placeholder="First & last name">
         </div>
+        ${extraFieldsHtml}
         <button class="submit-btn" id="submitBtn">I'm gassed — I'm coming</button>
       </div>
       <div class="confirm" id="confirmCard">
@@ -274,11 +336,35 @@ function renderPage(event, lineupItems, signupCount){
       document.getElementById('nameInput').focus();
       return;
     }
+    const phoneEl = document.getElementById('phoneInput');
+    const igEl = document.getElementById('igInput');
+    const phone = phoneEl ? phoneEl.value.trim() : '';
+    const instagram = igEl ? igEl.value.trim() : '';
+    if(signupMode === 'full' && !phone){
+      phoneEl.focus();
+      return;
+    }
+
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     btn.textContent = 'Signing up…';
 
-    const { error } = await gassedDb.from('signups').insert({ event_id: event.id, name });
+    const signupFields = { event_id: event.id, name };
+    if(signupMode === 'full'){
+      signupFields.phone = phone;
+      if(instagram) signupFields.instagram = instagram;
+    }
+
+    // phone/instagram may not exist as columns yet on every Supabase project
+    // this runs against — try the full insert first, and fall back to the
+    // known-good name-only insert rather than failing the whole sign-up if
+    // they're missing. Same defensive pattern as theme/avatar_url elsewhere.
+    let { error } = await gassedDb.from('signups').insert(signupFields);
+    if(error && signupMode === 'full'){
+      const fallback = await gassedDb.from('signups').insert({ event_id: event.id, name });
+      error = fallback.error;
+    }
+
     if(error){
       alert("Couldn't sign up: " + error.message);
       btn.disabled = false;
@@ -288,7 +374,10 @@ function renderPage(event, lineupItems, signupCount){
 
     document.getElementById('formCard').style.display = 'none';
     document.getElementById('confirmCard').classList.add('show');
+    hideFloatingGassedBtn();
   });
+
+  showFloatingGassedBtn();
 }
 
 loadEvent();
