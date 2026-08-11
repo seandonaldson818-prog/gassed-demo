@@ -117,6 +117,19 @@
     position:absolute; top:5px; right:5px; font-size:8px; font-weight:800; letter-spacing:.3px;
     color:#100d0c; background:var(--accent-bright); border-radius:5px; padding:2px 4px; line-height:1;
   }
+
+  /* Sign-up mode toggle — how much info the guest sign-up form on e/index.html
+     asks for. 'trial' = name only (today's default behavior). 'full' = name +
+     phone + Instagram. Same two-option segmented-control pattern as the theme
+     swatches above. */
+  .signup-mode-toggle{ display:flex; gap:10px; }
+  .signup-mode-opt{
+    flex:1; background:var(--panel); border:1.5px solid var(--card-line); border-radius:11px;
+    padding:10px 10px; cursor:pointer; font-family:'Inter',sans-serif; text-align:left;
+  }
+  .signup-mode-opt.active{ border-color:var(--accent-bright); box-shadow:0 0 0 1px var(--accent-bright), 0 0 14px rgba(181,101,255,0.35); }
+  .signup-mode-opt-name{ font-size:12.5px; color:var(--text); font-weight:700; margin-bottom:2px; }
+  .signup-mode-opt-desc{ font-size:10.5px; color:var(--muted); line-height:1.4; }
 </style>
 </head>
 <body>
@@ -206,6 +219,11 @@
         <div class="theme-swatches" id="themeSwatches"></div>
       </div>
 
+      <div class="field">
+        <label>Sign-up form</label>
+        <div class="signup-mode-toggle" id="signupModeToggle"></div>
+      </div>
+
       <button class="save-btn" id="saveBtn" onclick="handleCreateEvent()">Save & get link</button>
       <button class="cancel-btn" onclick="toggleForm()">Cancel</button>
     </div>
@@ -236,6 +254,30 @@ const GASSED_THEMES = [
   { key: 'redroom', name: 'Red Room',  dot: 'linear-gradient(135deg,#c81e3a,#ff3355)', tier: 'pro' },
 ];
 let selectedTheme = 'violet';
+
+// Sign-up mode toggle — how much info the guest sign-up form asks for on the
+// event page. Mirrors the `signup_mode` column on `events`; defaults to
+// 'trial' to match today's hardcoded (name-only) behavior.
+const GASSED_SIGNUP_MODES = [
+  { key: 'trial', name: 'Trial — name only', desc: 'Fastest sign-up. Just a name.' },
+  { key: 'full',  name: 'Full — name + phone + IG', desc: 'Collects phone (required) and Instagram (optional) too.' },
+];
+let selectedSignupMode = 'trial';
+
+function renderSignupModeToggle(){
+  const wrap = document.getElementById('signupModeToggle');
+  wrap.innerHTML = GASSED_SIGNUP_MODES.map(m => `
+    <div class="signup-mode-opt ${m.key === selectedSignupMode ? 'active' : ''}" onclick="selectSignupMode('${m.key}')">
+      <div class="signup-mode-opt-name">${m.name}</div>
+      <div class="signup-mode-opt-desc">${m.desc}</div>
+    </div>
+  `).join('');
+}
+
+function selectSignupMode(key){
+  selectedSignupMode = key;
+  renderSignupModeToggle();
+}
 
 function renderThemeSwatches(){
   const wrap = document.getElementById('themeSwatches');
@@ -315,28 +357,38 @@ async function handleCreateEvent(){
     entry_info: entry,
     hype_hook: hook,
     gauge_target: target,
-    status: 'live',
-    signup_mode: 'trial'
+    status: 'live'
   };
 
-  // `theme` may not exist as a column yet on every Supabase project this runs
-  // against — try the insert with it first, and fall back to the known-good
-  // columns rather than failing the whole event creation if it's missing.
-  // Same defensive pattern as avatar_url in handleSaveProfile().
+  // `theme` and `signup_mode` may not exist as columns yet on every Supabase
+  // project this runs against — try the insert with both first, then fall
+  // back progressively (drop signup_mode, then drop theme too) rather than
+  // failing the whole event creation if either is missing. Same defensive
+  // pattern as avatar_url in handleSaveProfile().
   let { data: eventRow, error: eventErr } = await gassedDb
     .from('events')
-    .insert({ ...baseEventFields, theme: selectedTheme })
+    .insert({ ...baseEventFields, theme: selectedTheme, signup_mode: selectedSignupMode })
     .select()
     .single();
 
   if(eventErr){
     const fallback = await gassedDb
       .from('events')
-      .insert(baseEventFields)
+      .insert({ ...baseEventFields, theme: selectedTheme })
       .select()
       .single();
     eventRow = fallback.data;
     eventErr = fallback.error;
+  }
+
+  if(eventErr){
+    const fallback2 = await gassedDb
+      .from('events')
+      .insert(baseEventFields)
+      .select()
+      .single();
+    eventRow = fallback2.data;
+    eventErr = fallback2.error;
   }
 
   if(eventErr){
@@ -379,6 +431,8 @@ async function handleCreateEvent(){
   document.getElementById('lineupList').innerHTML = '';
   selectedTheme = 'violet';
   renderThemeSwatches();
+  selectedSignupMode = 'trial';
+  renderSignupModeToggle();
 }
 
 function copyResultLink(){
@@ -519,6 +573,7 @@ function escapeHtml(str){
     document.getElementById(id).addEventListener('input', updateProfilePreview);
   });
   renderThemeSwatches();
+  renderSignupModeToggle();
   loadEvents();
 })();
 </script>
