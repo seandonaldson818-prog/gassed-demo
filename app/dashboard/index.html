@@ -123,7 +123,7 @@
         <button class="add-lineup-btn" onclick="addLineupRow()">+ Add to the lineup</button>
       </div>
 
-      <button class="save-btn" id="saveBtn" onclick="createEvent()">Save & get link</button>
+      <button class="save-btn" id="saveBtn" onclick="handleCreateEvent()">Save & get link</button>
       <button class="cancel-btn" onclick="toggleForm()">Cancel</button>
     </div>
 
@@ -174,7 +174,7 @@ function hideFormError(){
   document.getElementById('formError').style.display = 'none';
 }
 
-async function createEvent(){
+async function handleCreateEvent(){
   hideFormError();
   const venue = document.getElementById('fVenue').value.trim();
   const address = document.getElementById('fAddress').value.trim();
