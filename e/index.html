@@ -128,6 +128,25 @@
   .confirm h3{ margin:14px 0 6px; font-size:20px; }
   .confirm p{ color:var(--muted); font-size:13.5px; margin:0; }
 
+  /* Comments — visible to everyone, posting gated to guests who signed up
+     for this event (enforced by DB row-level security, see comments-setup.sql).
+     Composer stays locked with an explanatory note until the guest has
+     signed up (either just now, or on a prior visit from this browser). */
+  .comments-wrap{ background:var(--card); border:1px solid rgba(255,255,255,0.06); border-radius:14px; padding:16px; }
+  .comment-item{ padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.06); }
+  .comment-item:last-child{ border-bottom:none; }
+  .comment-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px; }
+  .comment-name{ font-weight:700; font-size:13.5px; color:var(--violet-bright); }
+  .comment-time{ font-size:11px; color:var(--muted); }
+  .comment-text{ font-size:14px; line-height:1.5; color:var(--text); }
+  .comments-empty{ font-size:13px; color:var(--muted); padding:6px 0 14px; }
+  .comment-composer{ display:flex; gap:8px; margin-top:14px; }
+  .comment-composer input{ flex:1; padding:11px 13px; border-radius:10px; border:1px solid rgba(255,255,255,0.12); background:#0f0919; color:var(--text); font-size:14px; }
+  .comment-composer input:focus{ outline:none; border-color:var(--violet-bright); }
+  .comment-composer button{ padding:0 18px; border:none; border-radius:10px; font-weight:800; font-size:13px; color:#fff; background:linear-gradient(90deg,var(--violet),var(--pink)); cursor:pointer; }
+  .comment-composer button:disabled{ opacity:.5; cursor:default; }
+  .comment-locked-note{ margin-top:14px; font-size:12.5px; color:var(--muted); text-align:center; padding:10px; border:1px dashed rgba(255,255,255,0.15); border-radius:10px; }
+
   .footer-note{ text-align:center; font-size:11px; color:#5f5478; margin-top:26px; padding:0 30px; line-height:1.6; }
   .loading, .not-found{ text-align:center; padding:80px 30px; color:var(--muted); font-size:14px; line-height:1.6; }
 </style>
@@ -156,6 +175,113 @@ function applyTheme(theme){
     document.documentElement.setAttribute('data-theme', theme);
   } else {
     document.documentElement.removeAttribute('data-theme');
+  }
+}
+
+// ---- Comments (real, DB-backed) ----
+// Viewing is open to everyone; posting is gated at the database level to
+// guests who signed up for THIS event (see comments-setup.sql). We track
+// two bits of local state once an event loads:
+//   gassedCanComment — true once we know this browser's guest is allowed
+//                      to post (either they just signed up, or a prior
+//                      anonymous session on this device already has a
+//                      matching signups row for this event).
+//   gassedGuestName  — the name to attach to a posted comment.
+let gassedCanComment = false;
+let gassedGuestName = '';
+
+function timeAgo(iso){
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.round(diffMs / 60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return mins + 'm ago';
+  const hrs = Math.round(mins / 60);
+  if(hrs < 24) return hrs + 'h ago';
+  return Math.round(hrs / 24) + 'd ago';
+}
+
+async function loadComments(eventId){
+  const listEl = document.getElementById('commentsList');
+  if(!listEl) return;
+  const { data: comments, error } = await gassedDb
+    .from('comments')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: true });
+
+  // The comments table may not exist yet on every Supabase project this runs
+  // against (it's a new addition — see comments-setup.sql) — fail quietly
+  // rather than breaking the rest of the guest page.
+  if(error){
+    listEl.innerHTML = '<div class="comments-empty">Comments aren\'t open yet — check back soon.</div>';
+    return;
+  }
+
+  listEl.innerHTML = comments.length
+    ? comments.map(c => `
+        <div class="comment-item">
+          <div class="comment-top"><span class="comment-name">${escapeHtml(c.name)}</span><span class="comment-time">${timeAgo(c.created_at)}</span></div>
+          <div class="comment-text">${escapeHtml(c.message)}</div>
+        </div>
+      `).join('')
+    : '<div class="comments-empty">No comments yet — be the first to say something.</div>';
+}
+
+function renderCommentsComposer(eventId){
+  const slot = document.getElementById('commentsComposerSlot');
+  if(!slot) return;
+  if(!gassedCanComment){
+    slot.innerHTML = '<div class="comment-locked-note">Sign up above to join the chat.</div>';
+    return;
+  }
+  slot.innerHTML = `
+    <div class="comment-composer">
+      <input type="text" id="commentInput" placeholder="Say something…" maxlength="280">
+      <button id="commentPostBtn">Post</button>
+    </div>
+  `;
+  const input = document.getElementById('commentInput');
+  const btn = document.getElementById('commentPostBtn');
+  const post = async () => {
+    const message = input.value.trim();
+    if(!message) { input.focus(); return; }
+    btn.disabled = true;
+    const { data: { session } } = await gassedDb.auth.getSession();
+    if(!session){
+      slot.innerHTML = '<div class="comment-locked-note">Sign up above to join the chat.</div>';
+      return;
+    }
+    const { error } = await gassedDb.from('comments').insert({
+      event_id: eventId, user_id: session.user.id, name: gassedGuestName, message
+    });
+    btn.disabled = false;
+    if(error){
+      alert("Couldn't post that: " + error.message);
+      return;
+    }
+    input.value = '';
+    loadComments(eventId);
+  };
+  btn.addEventListener('click', post);
+  input.addEventListener('keydown', (e) => { if(e.key === 'Enter') post(); });
+}
+
+// A returning guest's browser may already hold an anonymous auth session
+// from a prior sign-up (Supabase persists it in localStorage). If so, and
+// that session's user has a signups row for this event, unlock commenting
+// right away instead of making them sign up again.
+async function checkCanCommentFromPriorSession(eventId){
+  const { data: { session } } = await gassedDb.auth.getSession();
+  if(!session) return;
+  const { data: existingSignup } = await gassedDb
+    .from('signups')
+    .select('name')
+    .eq('event_id', eventId)
+    .eq('user_id', session.user.id)
+    .maybeSingle();
+  if(existingSignup){
+    gassedCanComment = true;
+    gassedGuestName = existingSignup.name;
   }
 }
 
@@ -208,6 +334,7 @@ async function loadEvent(){
     .eq('event_id', event.id);
 
   applyTheme(event.theme);
+  await checkCanCommentFromPriorSession(event.id);
   renderPage(event, lineupItems || [], signupCount || 0);
 }
 
@@ -342,6 +469,14 @@ function renderPage(event, lineupItems, signupCount){
       </div>
     </div>
 
+    <div class="section">
+      <div class="section-label">The Chat</div>
+      <div class="comments-wrap">
+        <div id="commentsList"><div class="comments-empty">Loading comments…</div></div>
+        <div id="commentsComposerSlot"></div>
+      </div>
+    </div>
+
     <div class="footer-note">Powered by Gassed — a link-in-bio built for throwing a night out.</div>
   `;
 
@@ -374,12 +509,26 @@ function renderPage(event, lineupItems, signupCount){
       if(instagram) signupFields.instagram = instagram;
     }
 
-    // phone/instagram may not exist as columns yet on every Supabase project
-    // this runs against — try the full insert first, and fall back to the
-    // known-good name-only insert rather than failing the whole sign-up if
-    // they're missing. Same defensive pattern as theme/avatar_url elsewhere.
+    // Give this browser a real (anonymous) auth user so the comments feature
+    // can later verify "did this visitor actually sign up for this event"
+    // at the database level. If anonymous sign-ins aren't enabled yet on this
+    // Supabase project, this just fails quietly and sign-up proceeds without
+    // a user_id — commenting simply stays locked for that guest until it's
+    // turned on (Auth -> Providers -> Anonymous, in Supabase settings).
+    let session = (await gassedDb.auth.getSession()).data.session;
+    if(!session){
+      const { data: authData } = await gassedDb.auth.signInAnonymously();
+      session = authData ? authData.session : null;
+    }
+    if(session) signupFields.user_id = session.user.id;
+
+    // phone/instagram/user_id may not exist as columns yet on every Supabase
+    // project this runs against — try the full insert first, and fall back
+    // to the known-good name-only insert rather than failing the whole
+    // sign-up if they're missing. Same defensive pattern as theme/avatar_url
+    // elsewhere.
     let { error } = await gassedDb.from('signups').insert(signupFields);
-    if(error && signupMode === 'full'){
+    if(error && (signupMode === 'full' || signupFields.user_id)){
       const fallback = await gassedDb.from('signups').insert({ event_id: event.id, name });
       error = fallback.error;
     }
@@ -394,9 +543,17 @@ function renderPage(event, lineupItems, signupCount){
     document.getElementById('formCard').style.display = 'none';
     document.getElementById('confirmCard').classList.add('show');
     hideFloatingGassedBtn();
+
+    if(session){
+      gassedCanComment = true;
+      gassedGuestName = name;
+      renderCommentsComposer(event.id);
+    }
   });
 
   showFloatingGassedBtn();
+  loadComments(event.id);
+  renderCommentsComposer(event.id);
 }
 
 loadEvent();
