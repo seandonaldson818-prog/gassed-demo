@@ -33,13 +33,13 @@ async function gassedGetCurrentPromoter() {
 
 function gassedRequireLogin(redirectTo) {
   gassedDb.auth.getSession().then(({ data: { session } }) => {
-    if (!session) window.location.href = redirectTo || '/login/';
+    if (!session) window.location.href = redirectTo || '/app/login/';
   });
 }
 
 async function gassedLogout() {
   await gassedDb.auth.signOut();
-  window.location.href = '/login/';
+  window.location.href = '/app/login/';
 }
 
 // Slugify a string for use in event links, e.g. "Ultraviolet" + "Jul 18" -> "ultraviolet-jul18"
