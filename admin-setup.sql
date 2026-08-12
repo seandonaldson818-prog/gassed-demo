@@ -41,8 +41,9 @@ where id = (select id from auth.users where email = 'YOUR_EMAIL_HERE');
 --    that policy's exact name — this only narrows access, never widens it.
 drop policy if exists "only active promoters can create events" on public.events;
 create policy "only active promoters can create events"
+  on public.events
   as restrictive
-  on public.events for insert
+  for insert
   to authenticated
   with check (
     exists (
@@ -53,8 +54,9 @@ create policy "only active promoters can create events"
 
 drop policy if exists "only active promoters can create lineup items" on public.lineup_items;
 create policy "only active promoters can create lineup items"
+  on public.lineup_items
   as restrictive
-  on public.lineup_items for insert
+  for insert
   to authenticated
   with check (
     exists (
