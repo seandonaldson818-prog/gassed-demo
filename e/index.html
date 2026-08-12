@@ -147,6 +147,27 @@
   .comment-composer button:disabled{ opacity:.5; cursor:default; }
   .comment-locked-note{ margin-top:14px; font-size:12.5px; color:var(--muted); text-align:center; padding:10px; border:1px dashed rgba(255,255,255,0.15); border-radius:10px; }
 
+  /* Photo/video gallery — "The Scene". Viewing is open to everyone; uploading
+     and downloading are gated to guests who signed up for this event (see
+     gallery-setup.sql). Downloaded images get a "GASSED" watermark stamped
+     on client-side via canvas at download time — see downloadMediaItem(). */
+  .gallery-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .gallery-item{ position:relative; border-radius:12px; overflow:hidden; aspect-ratio:1; background:#0f0919; border:1px solid rgba(255,255,255,0.08); }
+  .gallery-item img, .gallery-item video{ width:100%; height:100%; object-fit:cover; display:block; }
+  .gallery-item-dl{
+    position:absolute; bottom:6px; right:6px; width:30px; height:30px; border-radius:50%;
+    background:rgba(10,6,18,0.72); border:1px solid rgba(255,255,255,0.2); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:14px; cursor:pointer;
+  }
+  .gallery-empty{ font-size:13px; color:var(--muted); padding:6px 0 14px; grid-column:1 / -1; }
+  .gallery-upload-row{ margin-top:14px; }
+  .gallery-upload-btn{
+    width:100%; padding:12px; border:1px dashed rgba(255,255,255,0.2); border-radius:10px;
+    background:none; color:var(--violet-bright); font-weight:700; font-size:13px; cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .gallery-upload-btn:disabled{ opacity:.5; }
+  .gallery-pending-note{ font-size:11.5px; color:var(--muted); text-align:center; margin-top:8px; }
+
   .footer-note{ text-align:center; font-size:11px; color:#5f5478; margin-top:26px; padding:0 30px; line-height:1.6; }
   .loading, .not-found{ text-align:center; padding:80px 30px; color:var(--muted); font-size:14px; line-height:1.6; }
 </style>
@@ -282,7 +303,165 @@ async function checkCanCommentFromPriorSession(eventId){
   if(existingSignup){
     gassedCanComment = true;
     gassedGuestName = existingSignup.name;
+    gassedGuestUserId = session.user.id;
   }
+}
+
+// ---- Photo/video gallery ("The Scene") ----
+// Same gating shape as comments: viewing is open to everyone (approved
+// items only), uploading requires gassedCanComment (reused here — it's
+// really "has this browser signed up for this event", not comment-specific),
+// and gassedGuestUserId (set alongside gassedCanComment) is the auth.uid()
+// attached to any upload. See gallery-setup.sql for the RLS enforcing this
+// at the database level.
+let gassedGuestUserId = '';
+const GASSED_MEDIA_BUCKET = 'event-media';
+
+function gassedMediaPublicUrl(storagePath){
+  return `${GASSED_SUPABASE_URL}/storage/v1/object/public/${GASSED_MEDIA_BUCKET}/${storagePath}`;
+}
+
+async function loadGallery(eventId){
+  const grid = document.getElementById('galleryGrid');
+  if(!grid) return;
+  const { data: items, error } = await gassedDb
+    .from('media')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: false });
+
+  // The media table/Storage bucket may not exist yet on every Supabase
+  // project this runs against — fail quietly rather than breaking the rest
+  // of the guest page.
+  if(error){
+    grid.innerHTML = '<div class="gallery-empty">The gallery isn\'t open yet — check back soon.</div>';
+    return;
+  }
+
+  const visible = items.filter(m => m.approved || m.uploaded_by_user_id === gassedGuestUserId);
+  if(!visible.length){
+    grid.innerHTML = '<div class="gallery-empty">No photos yet — be the first to add one.</div>';
+    return;
+  }
+
+  grid.innerHTML = visible.map(m => {
+    const url = gassedMediaPublicUrl(m.storage_path);
+    const pendingBadge = !m.approved ? '<div class="gallery-pending-note" style="position:absolute;top:6px;left:6px;background:rgba(10,6,18,0.72);padding:2px 7px;border-radius:6px;margin:0;">Pending review</div>' : '';
+    const mediaHtml = m.media_type === 'video'
+      ? `<video src="${url}" muted playsinline loop onmouseover="this.play()" onmouseout="this.pause()"></video>`
+      : `<img src="${url}" alt="Event photo" loading="lazy">`;
+    return `
+      <div class="gallery-item" style="position:relative;">
+        ${mediaHtml}
+        ${pendingBadge}
+        <div class="gallery-item-dl" title="Download" onclick="downloadMediaItem('${url}', '${m.media_type}')">⬇</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Downloaded photos get a "GASSED" watermark stamped on via canvas, client
+// side, at download time — this is the accepted v1 compromise (a lightweight
+// deterrent, not launch-grade enforcement — see the concept doc). Video
+// downloads skip the watermark (canvas can't easily stamp video) and just
+// download the original file directly.
+function downloadMediaItem(url, mediaType){
+  if(mediaType === 'video'){
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'gassed-video';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    return;
+  }
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    const fontSize = Math.max(16, Math.round(canvas.width * 0.035));
+    ctx.font = `800 ${fontSize}px Inter, sans-serif`;
+    ctx.textBaseline = 'bottom';
+    const label = 'GASSED';
+    const pad = fontSize * 0.6;
+    const textWidth = ctx.measureText(label).width;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.fillRect(canvas.width - textWidth - pad * 2, canvas.height - fontSize - pad * 1.4, textWidth + pad * 2, fontSize + pad * 1.4);
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.fillText(label, canvas.width - textWidth - pad, canvas.height - pad * 0.5);
+    canvas.toBlob((blob) => {
+      const dlUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = dlUrl;
+      a.download = 'gassed-photo.jpg';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(dlUrl);
+    }, 'image/jpeg', 0.92);
+  };
+  img.onerror = () => {
+    // CORS or load failure — fall back to a plain, unwatermarked download
+    // rather than leaving the tap doing nothing.
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'gassed-photo';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+  img.src = url;
+}
+
+function renderGalleryUploadSlot(eventId){
+  const slot = document.getElementById('galleryUploadSlot');
+  if(!slot) return;
+  if(!gassedCanComment){
+    slot.innerHTML = '<div class="comment-locked-note">Sign up above to add your own photos.</div>';
+    return;
+  }
+  slot.innerHTML = `
+    <input type="file" id="mediaFileInput" accept="image/*,video/*" style="display:none;">
+    <button class="gallery-upload-btn" id="mediaUploadBtn">+ Add a photo or video</button>
+  `;
+  document.getElementById('mediaUploadBtn').addEventListener('click', () => {
+    document.getElementById('mediaFileInput').click();
+  });
+  document.getElementById('mediaFileInput').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const btn = document.getElementById('mediaUploadBtn');
+    btn.disabled = true;
+    btn.textContent = 'Uploading…';
+
+    const mediaType = file.type.startsWith('video') ? 'video' : 'image';
+    const ext = (file.name.split('.').pop() || (mediaType === 'video' ? 'mp4' : 'jpg')).toLowerCase();
+    const path = `${eventId}/${gassedGuestUserId}-${Date.now()}.${ext}`;
+
+    const { error: uploadErr } = await gassedDb.storage.from(GASSED_MEDIA_BUCKET).upload(path, file);
+    if(uploadErr){
+      alert("Couldn't upload that: " + uploadErr.message);
+      btn.disabled = false;
+      btn.textContent = '+ Add a photo or video';
+      return;
+    }
+
+    const { error: insertErr } = await gassedDb.from('media').insert({
+      event_id: eventId, uploaded_by_user_id: gassedGuestUserId, storage_path: path, media_type: mediaType
+    });
+    btn.disabled = false;
+    btn.textContent = '+ Add a photo or video';
+    if(insertErr){
+      alert("Couldn't save that: " + insertErr.message);
+      return;
+    }
+    document.getElementById('mediaFileInput').value = '';
+    loadGallery(eventId);
+  });
 }
 
 async function loadEvent(){
@@ -337,6 +516,11 @@ async function loadEvent(){
   await checkCanCommentFromPriorSession(event.id);
   renderPage(event, lineupItems || [], signupCount || 0);
 }
+
+// Called from both checkCanCommentFromPriorSession (returning guests) and
+// the sign-up submit handler (new guests) — keeps gassedGuestUserId in sync
+// with gassedCanComment so the gallery's upload gate always knows who's
+// uploading.
 
 // ---- Floating "I'M GASSED" sign-up shortcut ----
 function scrollToGassedSignup(){
@@ -470,6 +654,14 @@ function renderPage(event, lineupItems, signupCount){
     </div>
 
     <div class="section">
+      <div class="section-label">The Scene</div>
+      <div class="comments-wrap">
+        <div class="gallery-grid" id="galleryGrid"><div class="gallery-empty">Loading photos…</div></div>
+        <div class="gallery-upload-row" id="galleryUploadSlot"></div>
+      </div>
+    </div>
+
+    <div class="section">
       <div class="section-label">The Chat</div>
       <div class="comments-wrap">
         <div id="commentsList"><div class="comments-empty">Loading comments…</div></div>
@@ -547,13 +739,17 @@ function renderPage(event, lineupItems, signupCount){
     if(session){
       gassedCanComment = true;
       gassedGuestName = name;
+      gassedGuestUserId = session.user.id;
       renderCommentsComposer(event.id);
+      renderGalleryUploadSlot(event.id);
     }
   });
 
   showFloatingGassedBtn();
   loadComments(event.id);
   renderCommentsComposer(event.id);
+  loadGallery(event.id);
+  renderGalleryUploadSlot(event.id);
 }
 
 loadEvent();
