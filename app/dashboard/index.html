@@ -130,6 +130,21 @@
   .signup-mode-opt.active{ border-color:var(--accent-bright); box-shadow:0 0 0 1px var(--accent-bright), 0 0 14px rgba(181,101,255,0.35); }
   .signup-mode-opt-name{ font-size:12.5px; color:var(--text); font-weight:700; margin-bottom:2px; }
   .signup-mode-opt-desc{ font-size:10.5px; color:var(--muted); line-height:1.4; }
+
+  /* Photo/video approval queue — opened per-event via the "Photos" button
+     on an event card. Shows pending guest/host uploads for that event with
+     Approve/Reject actions (see gallery-setup.sql for the RLS backing this). */
+  .photos-btn{ font-size:11px; font-weight:700; background:var(--card-line); border:none; color:var(--text); padding:6px 10px; border-radius:6px; cursor:pointer; font-family:'Inter',sans-serif; }
+  .photos-panel{ display:none; background:var(--panel); border:1px solid var(--card-line); border-radius:12px; padding:12px; margin-top:10px; }
+  .photos-panel.open{ display:block; }
+  .photos-empty{ font-size:12.5px; color:var(--muted); padding:6px 2px; }
+  .photo-review-item{ display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid var(--card-line); }
+  .photo-review-item:last-child{ border-bottom:none; }
+  .photo-review-thumb{ width:56px; height:56px; border-radius:8px; object-fit:cover; background:#0f0919; flex-shrink:0; }
+  .photo-review-actions{ display:flex; gap:6px; margin-left:auto; }
+  .photo-approve-btn{ font-size:11px; font-weight:700; background:rgba(79,224,160,0.15); border:1px solid rgba(79,224,160,0.35); color:var(--green); padding:6px 9px; border-radius:7px; cursor:pointer; font-family:'Inter',sans-serif; }
+  .photo-reject-btn{ font-size:11px; font-weight:700; background:rgba(224,95,108,0.15); border:1px solid rgba(224,95,108,0.35); color:var(--danger); padding:6px 9px; border-radius:7px; cursor:pointer; font-family:'Inter',sans-serif; }
+  .photo-approved-tag{ font-size:10.5px; color:var(--green); font-weight:700; margin-left:auto; }
 </style>
 </head>
 <body>
@@ -475,10 +490,71 @@ async function loadEvents(){
         <div class="event-link-row">
           <div class="event-link-text">${link}</div>
           <button class="copy-btn" onclick="copyText('${link}', this)">Copy</button>
+          <button class="photos-btn" onclick="togglePhotosPanel('${ev.id}')">Photos</button>
         </div>
+        <div class="photos-panel" id="photosPanel_${ev.id}"></div>
       </div>
     `;
   }).join('');
+}
+
+// ---- Photo/video approval queue (per event) ----
+async function togglePhotosPanel(eventId){
+  const panel = document.getElementById('photosPanel_' + eventId);
+  if(!panel) return;
+  const opening = !panel.classList.contains('open');
+  panel.classList.toggle('open');
+  if(opening) await loadPhotosPanel(eventId);
+}
+
+async function loadPhotosPanel(eventId){
+  const panel = document.getElementById('photosPanel_' + eventId);
+  panel.innerHTML = '<div class="photos-empty">Loading…</div>';
+
+  const { data: items, error } = await gassedDb
+    .from('media')
+    .select('*')
+    .eq('event_id', eventId)
+    .order('created_at', { ascending: false });
+
+  // The media table/Storage bucket may not exist yet on every Supabase
+  // project this runs against (see gallery-setup.sql) — fail quietly.
+  if(error){
+    panel.innerHTML = `<div class="photos-empty">Photos aren't set up yet: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  if(!items.length){
+    panel.innerHTML = '<div class="photos-empty">No uploads yet for this event.</div>';
+    return;
+  }
+
+  panel.innerHTML = items.map(m => {
+    const url = `${GASSED_SUPABASE_URL}/storage/v1/object/public/event-media/${m.storage_path}`;
+    const thumbHtml = m.media_type === 'video'
+      ? `<video class="photo-review-thumb" src="${url}" muted></video>`
+      : `<img class="photo-review-thumb" src="${url}" alt="Upload">`;
+    const actionsHtml = m.approved
+      ? '<div class="photo-approved-tag">Approved ✓</div>'
+      : `
+        <div class="photo-review-actions">
+          <button class="photo-approve-btn" onclick="approveMedia('${m.id}', '${eventId}')">Approve</button>
+          <button class="photo-reject-btn" onclick="rejectMedia('${m.id}', '${eventId}')">Reject</button>
+        </div>
+      `;
+    return `<div class="photo-review-item">${thumbHtml}${actionsHtml}</div>`;
+  }).join('');
+}
+
+async function approveMedia(mediaId, eventId){
+  const { error } = await gassedDb.from('media').update({ approved: true }).eq('id', mediaId);
+  if(error){ alert("Couldn't approve: " + error.message); return; }
+  loadPhotosPanel(eventId);
+}
+
+async function rejectMedia(mediaId, eventId){
+  const { error } = await gassedDb.from('media').delete().eq('id', mediaId);
+  if(error){ alert("Couldn't reject: " + error.message); return; }
+  loadPhotosPanel(eventId);
 }
 
 function updateProfilePreview(){
