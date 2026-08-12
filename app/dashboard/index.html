@@ -145,6 +145,22 @@
   .photo-approve-btn{ font-size:11px; font-weight:700; background:rgba(79,224,160,0.15); border:1px solid rgba(79,224,160,0.35); color:var(--green); padding:6px 9px; border-radius:7px; cursor:pointer; font-family:'Inter',sans-serif; }
   .photo-reject-btn{ font-size:11px; font-weight:700; background:rgba(224,95,108,0.15); border:1px solid rgba(224,95,108,0.35); color:var(--danger); padding:6px 9px; border-radius:7px; cursor:pointer; font-family:'Inter',sans-serif; }
   .photo-approved-tag{ font-size:10.5px; color:var(--green); font-weight:700; margin-left:auto; }
+
+  /* Admin link in the topbar — only shown/rendered for a promoter whose
+     `is_admin` flag is true (see admin-setup.sql). Everyone else never sees
+     this button at all. */
+  .admin-link-btn{ font-size:11.5px; color:var(--accent-bright); background:none; border:1px solid rgba(181,101,255,0.35); border-radius:8px; padding:7px 11px; cursor:pointer; font-family:'Inter',sans-serif; text-decoration:none; margin-right:8px; }
+
+  /* Pending/suspended holding state — shown instead of the event tools when
+     a promoter's `status` isn't 'active' (see "Plug application approval"
+     in the concept doc). Real enforcement lives in RLS, not this UI — this
+     is just the honest reflection of what the account can actually do. */
+  .status-card{ display:none; background:var(--card); border:1px solid var(--card-line); border-radius:16px; padding:22px 18px; text-align:center; }
+  .status-card.show{ display:block; }
+  .status-card-icon{ font-family:var(--display-font); font-size:26px; color:var(--accent-bright); margin-bottom:8px; }
+  .status-card-title{ font-size:15px; font-weight:800; margin-bottom:6px; }
+  .status-card-body{ font-size:12.5px; color:var(--muted); line-height:1.6; }
+  .status-card.suspended .status-card-title{ color:var(--danger); }
 </style>
 </head>
 <body>
@@ -154,9 +170,19 @@
       <div class="brand-mark">G</div>
       <div class="brand-hi">Plug tools<b id="promoterHandle">…</b></div>
     </div>
-    <button class="logout-btn" onclick="gassedLogout()">Log out</button>
+    <div>
+      <a class="admin-link-btn" id="adminLinkBtn" href="/app/admin/" style="display:none;">Admin</a>
+      <button class="logout-btn" onclick="gassedLogout()">Log out</button>
+    </div>
   </div>
 
+  <div class="status-card" id="statusCard">
+    <div class="status-card-icon">G</div>
+    <div class="status-card-title" id="statusCardTitle">Your application is under review</div>
+    <div class="status-card-body" id="statusCardBody">Thanks for applying to be a Plug — the founder reviews new applications before full access opens up. You'll be able to create events as soon as you're approved. No need to do anything else in the meantime.</div>
+  </div>
+
+  <div id="mainSections">
   <div class="section">
     <div class="section-head">
       <div class="section-label">Your Plug Profile</div>
@@ -250,6 +276,7 @@
     </div>
 
     <div id="eventsList"></div>
+  </div>
   </div>
 </div>
 
@@ -641,6 +668,33 @@ function escapeHtml(str){
     return;
   }
   document.getElementById('promoterHandle').textContent = '@' + currentPromoter.handle;
+
+  // `is_admin` may not exist as a column yet on every Supabase project this
+  // runs against (see admin-setup.sql) — a missing/undefined value just means
+  // "not an admin," never an error, so this is safe either way.
+  if(currentPromoter.is_admin === true){
+    document.getElementById('adminLinkBtn').style.display = 'inline-block';
+  }
+
+  // `status` may not exist as a column yet either — treat a missing value as
+  // 'active' so nothing breaks for a Supabase project that hasn't run
+  // admin-setup.sql yet. Once it has, new signups default to 'pending' and
+  // only a promoter with status = 'active' sees the actual dashboard tools —
+  // enforced for real via RLS on events/lineup_items, this is just the UI
+  // honestly reflecting that.
+  const status = currentPromoter.status || 'active';
+  if(status !== 'active'){
+    const card = document.getElementById('statusCard');
+    card.classList.add('show');
+    if(status === 'suspended'){
+      card.classList.add('suspended');
+      document.getElementById('statusCardTitle').textContent = 'Your account is suspended';
+      document.getElementById('statusCardBody').textContent = "Reach out to the founder if you think this is a mistake — event creation is paused on this account for now.";
+    }
+    document.getElementById('mainSections').style.display = 'none';
+    return;
+  }
+
   document.getElementById('fDisplayName').value = currentPromoter.display_name || '';
   document.getElementById('fTagline').value = currentPromoter.tagline || '';
   document.getElementById('fAvatarUrl').value = currentPromoter.avatar_url || '';
