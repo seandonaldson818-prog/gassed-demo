@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gassed — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#100d0c; --panel:#17131a; --card:#1b171c; --card-line:rgba(255,255,255,0.08);
+    --accent:#8b2fff; --accent-bright:#b565ff; --pink:#ff4fd8;
+    --text:#f2ede6; --muted:#8f8a90; --muted-dim:#655f68; --green:#4fe0a0; --danger:#e05f6c; --amber:#f5c86b;
+    --display-font:'Bebas Neue', Anton, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; font-family:'Inter',-apple-system,sans-serif; background:radial-gradient(circle at 50% 0%, #1c1420 0%, var(--bg) 55%); color:var(--text); min-height:100vh; display:flex; justify-content:center; }
+  .wrap{ width:100%; max-width:560px; padding-bottom:60px; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:18px 20px 15px; border-bottom:1px solid var(--card-line); }
+  .brand-lockup{ display:flex; align-items:center; gap:10px; }
+  .brand-mark{ width:30px;height:30px;border-radius:8px; background:var(--panel); border:1px solid var(--card-line); display:flex;align-items:center;justify-content:center; font-family:Anton,sans-serif; font-size:14px; color:var(--accent-bright); }
+  .brand-hi{ font-size:10.5px; color:var(--muted); line-height:1.3; }
+  .brand-hi b{ color:var(--text); font-size:13.5px; display:block; font-weight:700; }
+  .topbar-actions{ display:flex; gap:8px; }
+  .back-btn, .logout-btn{ font-size:11.5px; color:var(--muted); background:none; border:1px solid var(--card-line); border-radius:8px; padding:7px 11px; cursor:pointer; font-family:'Inter',sans-serif; text-decoration:none; }
+
+  .section{ margin:22px 20px 0; }
+  .section-label{ font-family:var(--display-font); font-size:16px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); font-weight:400; margin-bottom:4px; }
+  .section-sub{ font-size:11.5px; color:var(--muted-dim); margin:0 0 14px; line-height:1.5; }
+
+  .filter-tabs{ display:flex; gap:6px; margin-bottom:16px; flex-wrap:wrap; }
+  .filter-tab{ font-size:11.5px; font-weight:700; background:var(--panel); border:1px solid var(--card-line); color:var(--muted); padding:7px 11px; border-radius:8px; cursor:pointer; font-family:'Inter',sans-serif; }
+  .filter-tab.active{ color:#fff; background:var(--accent); border-color:var(--accent); }
+
+  .empty-state{ text-align:center; padding:40px 20px; color:var(--muted); font-size:13.5px; line-height:1.6; }
+
+  .promoter-card{ background:var(--card); border:1px solid var(--card-line); border-radius:14px; padding:14px 16px; margin-bottom:10px; }
+  .promoter-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:4px; }
+  .promoter-name{ font-size:15.5px; font-weight:800; }
+  .promoter-handle{ font-size:11.5px; color:var(--muted); }
+  .status-badge{ font-size:9.5px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; padding:3px 8px; border-radius:6px; white-space:nowrap; }
+  .status-badge.active{ color:var(--green); background:rgba(79,224,160,0.12); border:1px solid rgba(79,224,160,0.3); }
+  .status-badge.pending{ color:var(--amber); background:rgba(245,200,107,0.12); border:1px solid rgba(245,200,107,0.35); }
+  .status-badge.suspended, .status-badge.rejected{ color:var(--danger); background:rgba(224,95,108,0.12); border:1px solid rgba(224,95,108,0.3); }
+  .promoter-meta{ font-size:11.5px; color:var(--muted-dim); margin-bottom:10px; }
+  .promoter-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .pa-btn{ font-size:11px; font-weight:700; border-radius:7px; padding:7px 11px; cursor:pointer; font-family:'Inter',sans-serif; border:1px solid transparent; }
+  .pa-approve{ background:rgba(79,224,160,0.15); border-color:rgba(79,224,160,0.35); color:var(--green); }
+  .pa-reject{ background:rgba(224,95,108,0.15); border-color:rgba(224,95,108,0.35); color:var(--danger); }
+  .pa-suspend{ background:var(--panel); border-color:var(--card-line); color:var(--text); }
+  .pa-reactivate{ background:rgba(139,47,255,0.15); border-color:rgba(139,47,255,0.35); color:var(--accent-bright); }
+  .pa-btn:disabled{ opacity:.5; cursor:default; }
+
+  .not-admin{ text-align:center; padding:60px 24px; color:var(--muted); font-size:13.5px; line-height:1.7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand-lockup">
+      <div class="brand-mark">G</div>
+      <div class="brand-hi">Admin<b>Promoter accounts</b></div>
+    </div>
+    <div class="topbar-actions">
+      <a class="back-btn" href="/app/dashboard/">My dashboard</a>
+      <button class="logout-btn" onclick="gassedLogout()">Log out</button>
+    </div>
+  </div>
+
+  <div id="adminRoot">
+    <div class="section">
+      <div class="empty-state">Checking access…</div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/gassed-supabase.js"></script>
+<script>
+let allPromoters = [];
+let activeFilter = 'pending';
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+function renderAdminShell(){
+  document.getElementById('adminRoot').innerHTML = `
+    <div class="section">
+      <div class="section-label">Promoters</div>
+      <div class="section-sub">Every account on Gassed. Pending applicants need a review before they can create real events — see "Plug application approval" in the concept doc for the reasoning.</div>
+      <div class="filter-tabs" id="filterTabs"></div>
+      <div id="promoterList"></div>
+    </div>
+  `;
+  renderFilterTabs();
+  renderPromoterList();
+}
+
+const FILTERS = [
+  { key: 'pending', label: 'Pending' },
+  { key: 'active', label: 'Active' },
+  { key: 'suspended', label: 'Suspended' },
+  { key: 'rejected', label: 'Rejected' },
+  { key: 'all', label: 'All' },
+];
+
+function renderFilterTabs(){
+  const wrap = document.getElementById('filterTabs');
+  wrap.innerHTML = FILTERS.map(f => {
+    const count = f.key === 'all' ? allPromoters.length : allPromoters.filter(p => (p.status || 'active') === f.key).length;
+    return `<button class="filter-tab ${f.key === activeFilter ? 'active' : ''}" onclick="setFilter('${f.key}')">${f.label} (${count})</button>`;
+  }).join('');
+}
+
+function setFilter(key){
+  activeFilter = key;
+  renderFilterTabs();
+  renderPromoterList();
+}
+
+function renderPromoterList(){
+  const list = document.getElementById('promoterList');
+  const filtered = activeFilter === 'all'
+    ? allPromoters
+    : allPromoters.filter(p => (p.status || 'active') === activeFilter);
+
+  if(!filtered.length){
+    list.innerHTML = `<div class="empty-state">No ${activeFilter === 'all' ? '' : activeFilter + ' '}promoters right now.</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(p => {
+    const status = p.status || 'active';
+    const name = p.display_name || p.handle || 'Unnamed';
+    const joined = p.created_at ? new Date(p.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : '';
+    let actions = '';
+    if(status === 'pending'){
+      actions = `
+        <button class="pa-btn pa-approve" onclick="setPromoterStatus('${p.id}', 'active')">Approve</button>
+        <button class="pa-btn pa-reject" onclick="setPromoterStatus('${p.id}', 'rejected')">Reject</button>
+      `;
+    } else if(status === 'active'){
+      actions = `<button class="pa-btn pa-suspend" onclick="setPromoterStatus('${p.id}', 'suspended')">Suspend</button>`;
+    } else if(status === 'suspended' || status === 'rejected'){
+      actions = `<button class="pa-btn pa-reactivate" onclick="setPromoterStatus('${p.id}', 'active')">Reactivate</button>`;
+    }
+    return `
+      <div class="promoter-card">
+        <div class="promoter-top">
+          <div>
+            <div class="promoter-name">${escapeHtml(name)}</div>
+            <div class="promoter-handle">@${escapeHtml(p.handle || '—')}</div>
+          </div>
+          <div class="status-badge ${status}">${status}</div>
+        </div>
+        <div class="promoter-meta">${joined ? 'Applied ' + joined : ''}</div>
+        <div class="promoter-actions">${actions}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function setPromoterStatus(promoterId, newStatus){
+  const { error } = await gassedDb.from('promoters').update({ status: newStatus }).eq('id', promoterId);
+  if(error){
+    alert("Couldn't update that promoter: " + error.message);
+    return;
+  }
+  const p = allPromoters.find(x => x.id === promoterId);
+  if(p) p.status = newStatus;
+  renderFilterTabs();
+  renderPromoterList();
+}
+
+async function loadPromoters(){
+  const { data, error } = await gassedDb
+    .from('promoters')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if(error){
+    document.getElementById('adminRoot').innerHTML = `<div class="section"><div class="empty-state">Couldn't load promoters: ${escapeHtml(error.message)}<br><br>If admin-setup.sql hasn't been run yet on this Supabase project, that's expected — this page needs the is_admin/status columns and RLS policies from that migration first.</div></div>`;
+    return;
+  }
+  allPromoters = data || [];
+  renderAdminShell();
+}
+
+(async function init(){
+  const { data: { session } } = await gassedDb.auth.getSession();
+  if(!session){
+    window.location.href = '/app/login/';
+    return;
+  }
+  const me = await gassedGetCurrentPromoter();
+  if(!me || me.is_admin !== true){
+    document.getElementById('adminRoot').innerHTML = `<div class="not-admin">This page is admin-only.<br><br><a href="/app/dashboard/" style="color:var(--accent-bright);">Back to your dashboard →</a></div>`;
+    return;
+  }
+  loadPromoters();
+})();
+</script>
+</body>
+</html>
