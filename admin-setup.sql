@@ -69,33 +69,49 @@ create policy "only active promoters can create lineup items"
 -- 5. RLS — admin visibility. Additive SELECT policies (they only ever grant
 --    MORE access, never take any away) letting an is_admin promoter read
 --    every row on these four tables, for the /app/admin/ list + detail view.
+--
+--    These CANNOT check "is_admin" by running
+--    `exists (select 1 from public.promoters where ...)` directly inside a
+--    policy that lives ON public.promoters itself — Postgres re-applies
+--    every RLS policy on promoters (including this one) to evaluate that
+--    inner subquery, which calls itself again, forever, and every query
+--    against promoters (even a promoter reading their own row) starts
+--    failing with "infinite recursion detected in policy for relation
+--    promoters". Instead, a SECURITY DEFINER helper function does the
+--    is_admin lookup as the function's owner, which is exempt from RLS on
+--    the table it owns — that's what actually breaks the loop.
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select coalesce(
+    (select is_admin from public.promoters where id = auth.uid()),
+    false
+  );
+$$;
+
 drop policy if exists "admins can read all promoters" on public.promoters;
 create policy "admins can read all promoters"
   on public.promoters for select
-  using (
-    exists (select 1 from public.promoters me where me.id = auth.uid() and me.is_admin = true)
-  );
+  using ( public.is_admin() );
 
 drop policy if exists "admins can read all events" on public.events;
 create policy "admins can read all events"
   on public.events for select
-  using (
-    exists (select 1 from public.promoters me where me.id = auth.uid() and me.is_admin = true)
-  );
+  using ( public.is_admin() );
 
 drop policy if exists "admins can read all lineup items" on public.lineup_items;
 create policy "admins can read all lineup items"
   on public.lineup_items for select
-  using (
-    exists (select 1 from public.promoters me where me.id = auth.uid() and me.is_admin = true)
-  );
+  using ( public.is_admin() );
 
 drop policy if exists "admins can read all signups" on public.signups;
 create policy "admins can read all signups"
   on public.signups for select
-  using (
-    exists (select 1 from public.promoters me where me.id = auth.uid() and me.is_admin = true)
-  );
+  using ( public.is_admin() );
 
 -- 6. RLS — the actual approve/reject/suspend/reactivate action. An is_admin
 --    promoter can update ANY promoter row's status (and is_admin itself, so
@@ -105,9 +121,5 @@ create policy "admins can read all signups"
 drop policy if exists "admins can update any promoter" on public.promoters;
 create policy "admins can update any promoter"
   on public.promoters for update
-  using (
-    exists (select 1 from public.promoters me where me.id = auth.uid() and me.is_admin = true)
-  )
-  with check (
-    exists (select 1 from public.promoters me where me.id = auth.uid() and me.is_admin = true)
-  );
+  using ( public.is_admin() )
+  with check ( public.is_admin() );
